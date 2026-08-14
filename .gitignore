@@ -4,6 +4,11 @@ dist/
 *.log
 .DS_Store
 HANDOFF.md.resumed-*
+*.consumed-*
+
+# Local MCP tool trust grants (per-machine, per-installed-version — see
+# `cadence mcp trust grant`); never shared across machines/worktrees.
+.cadence/mcp-trust.json
 
 # Local secrets — never commit the real .env (template is .env.example)
 .env
