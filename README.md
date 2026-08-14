@@ -4,14 +4,15 @@
 CLI that finds anti-pattern code and proposes LLM-assisted fixes — and refuses
 to guess where pure-static tools can't.
 
-> **Status: v1.2 — published on [npm](https://www.npmjs.com/package/@manehorizons/necro).**
-> Necro analyzes **TypeScript** across
+> **Status: v1.6.0 — published on [npm](https://www.npmjs.com/package/@manehorizons/necro).**
+> Necro analyzes **TypeScript/JavaScript and Python** across
 > multiple axes — dead code (with confidence tiers, evidence chains, and the
 > `test-only` verdict), complexity, risk hotspots, and duplication — plus safe
-> dead-code removal (`fix`), LLM triage of ambiguous findings (`triage`),
+> dead-code removal (`fix`), a `baseline` / `// necro-ignore` suppression path,
+> LLM triage of ambiguous findings (`triage`),
 > LLM-assisted refactors (`refactor`), and a read-only [MCP server](#use-from-an-ai-agent-mcp)
 > for AI agents (`mcp`), **SARIF output + `--fail-on` gating + a GitHub Action**
-> for CI. More framework plugins and Python are on the [roadmap](#roadmap).
+> for CI. More framework plugins are on the [roadmap](#roadmap).
 
 ## Why Necro
 
@@ -114,15 +115,26 @@ copy-paste clones) — each section omitted when empty.
 ```bash
 necro fix src/                 # preview removal of certain-dead code (diff only)
 necro fix src/ --write         # apply it (verifies each removal with typecheck first, by default; refuses on a dirty git tree; --force to override; --no-verify to skip verification)
+necro baseline src/            # snapshot current findings so they stop gating --fail-on (adopt necro on a legacy codebase without failing CI on day one)
 necro triage src/              # LLM-resolve the quarantined `maybe` findings (opt-in, Anthropic API)
 necro refactor src/ --type god-function        # propose an LLM refactor, verified in a scratch worktree
 necro refactor src/ --type extract-duplicate   # lift a shared function out of a clone
 ```
 
 `triage` and `refactor` are opt-in and call the Anthropic API (set
-`ANTHROPIC_API_KEY`); `scan` and `fix` are fully local and free. `refactor`
-prints proposals — it never edits your files — and each is verified
-(typecheck + tests) in a throwaway git worktree before you see it.
+`ANTHROPIC_API_KEY`, or `provider: "host-cli"` in `necro.config.json` to shell
+out to an already-authenticated `claude` binary instead — no API key needed
+inside a Claude Code session); `scan`, `fix`, and `baseline` are fully local
+and free. `refactor` prints proposals — it never edits your files — and each
+is verified (typecheck + tests) in a throwaway git worktree before you see it.
+
+A single finding can also be suppressed inline, without touching the
+baseline, by adding a `// necro-ignore` comment on the line above it:
+
+```ts
+// necro-ignore
+export function legacyShim() {}
+```
 
 #### `fix` exit codes
 
@@ -342,11 +354,17 @@ tests and clear acceptance criteria match how the codebase is built.
 
 ## Roadmap
 
-**Available today** (TypeScript):
+**Available today** (TypeScript/JavaScript and Python):
 
-- Semantic **dead-code** detection (TS compiler API via ts-morph), confidence
-  tiers, evidence chains, the `test-only` verdict, test-runner awareness
-  (jest/vitest), and lcov **coverage ingestion**.
+- Semantic **dead-code** detection — TS compiler API via ts-morph for
+  TypeScript/JavaScript, a hand-rolled symbol graph + module resolver for
+  Python (module resolution incl. `__init__.py` re-export chains,
+  `pyproject.toml`/`setup.py`/`setup.cfg` entry points, pytest test-glob
+  entries) — with confidence tiers, evidence chains, the `test-only` verdict,
+  test-runner awareness (jest/vitest), and coverage ingestion (lcov for
+  TS/JS, [Cobertura](https://cobertura.github.io/cobertura/) `coverage.xml`
+  for Python). Python findings are capped at `likely` — the resolver's
+  recall/precision isn't corpus-validated to the TS plane's bar yet.
 - **Complexity** detectors (nesting, cyclomatic, cognitive, god-function) with
   configurable thresholds.
 - **Risk hotspots**: CRAP score (complexity² × (1 − coverage)³ + complexity) ×
@@ -375,7 +393,7 @@ tests and clear acceptance criteria match how the codebase is built.
 | Scoring | Per-line & recency-weighted churn, ownership weighting |
 | Fixes | `test-only` auto-apply; cascading re-analysis after a fix |
 | Frameworks | NestJS (DI), template-based plugins |
-| Languages | Python (detectors reused, new symbol-graph adapter) |
+| Accuracy | Python `certain` tier (corpus validation to raise it off the `likely` cap) |
 
 ## License
 

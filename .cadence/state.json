@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "revision": 1037,
+  "revision": 1053,
   "project": {
     "name": "necro",
     "createdAt": "2026-06-08T00:09:04.004Z"
   },
-  "activePhase": "68-initializer-purity-screen",
+  "activePhase": "69-documentation-sync-to-head-v1-6-0",
   "activeDraft": null,
   "activeSpec": null,
   "loopPosition": "IDLE",
   "tier": null,
-  "draftReadAt": "2026-07-21T22:56:34.250Z",
+  "draftReadAt": "2026-08-13T23:51:13.407Z",
   "openDrafts": [],
   "decisions": [],
   "deferred": [],
   "session": {
     "tokenUtilization": 1,
     "lastHandoff": "SESSION-2026-07-21-v1.6.0-release.md",
-    "subagentSpawns": 166,
+    "subagentSpawns": 169,
     "subagentBaselines": {}
   },
   "skillAudit": {

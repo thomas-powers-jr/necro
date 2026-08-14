@@ -200,6 +200,38 @@ necro fix [path] [options]
 
 `fix` exits `0` on every successful run (preview, write, or nothing-to-fix).
 
+## `necro baseline`
+
+Snapshot current dead-code and complexity findings so they stop gating
+`--fail-on` — for adopting necro on an existing codebase without failing CI
+on day one. Baselined findings are excluded from `--fail-on`'s check but
+still print in a normal `scan`; a new finding introduced after baselining
+still shows and still gates.
+
+```
+necro baseline [path]
+```
+
+### Arguments
+
+| Argument | Default | Description |
+|---|---|---|
+| `[path]` | `.` | Directory or file to scan. |
+
+### Options
+
+| Option | Description |
+|---|---|
+| `-h`, `--help` | Show help for `baseline`. |
+
+Writes `.necro-baseline.json` to the scanned directory, recording a stable
+key (file + name + kind) per current finding. Commit this file so CI and
+local runs share the same baseline.
+
+### Exit code
+
+`baseline` exits `0` on every successful run.
+
 ## `necro triage`
 
 LLM-resolve the quarantined `maybe` findings — advisory and opt-in. `triage`

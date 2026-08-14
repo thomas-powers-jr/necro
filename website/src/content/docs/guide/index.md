@@ -6,9 +6,10 @@ sidebar:
   label: Overview
 ---
 
-Necro is a local, free CLI that finds **dead code** in TypeScript — and, unlike
-pure-static tools, refuses to guess where it can't be sure. Each finding comes
-with a confidence tier and an **evidence chain** you can audit.
+Necro is a local, free CLI that finds **dead code** in TypeScript/JavaScript
+and Python — and, unlike pure-static tools, refuses to guess where it can't be
+sure. Each finding comes with a confidence tier and an **evidence chain** you
+can audit.
 
 This guide walks from install to reading results to wiring Necro into CI.
 
@@ -28,6 +29,7 @@ This guide walks from install to reading results to wiring Necro into CI.
 ## Configure and integrate
 
 - **[Configuration](/necro/guide/configuration/)** — `necro.config.json`.
+- **[Suppressing findings](/necro/guide/suppressing-findings/)** — `necro baseline` and `// necro-ignore`.
 - **[Framework awareness](/necro/guide/framework-awareness/)** — jest / vitest.
 - **[CI integration](/necro/guide/ci-integration/)** — JSON output for pipelines.
 - **[Roadmap](/necro/guide/roadmap/)** — what's planned next.

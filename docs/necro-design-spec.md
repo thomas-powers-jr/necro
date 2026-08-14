@@ -4,9 +4,11 @@
 > decisions behind Necro; forward-looking sections (build order, "for MVP")
 > describe original intent. For what's shipped vs. planned today, see the
 > [roadmap](../website/src/content/docs/guide/roadmap.md) and `README.md`. As of
-> this writing the TypeScript engine ships dead-code, complexity, hotspot, and
-> duplication analysis plus `fix`, `triage`, `refactor`, and a read-only `mcp`
-> server; SARIF, more framework plugins, and Python remain planned.
+> this writing the engine ships dead-code, complexity, hotspot, and
+> duplication analysis for both TypeScript/JavaScript and Python, plus `fix`,
+> `baseline`/`// necro-ignore` suppression, `triage`, `refactor`, a read-only
+> `mcp` server, and SARIF + `--fail-on` output for CI; more framework plugins
+> (beyond Next.js and monorepo workspaces) remain planned.
 
 **Necro.** A local, free, polyglot CLI that finds anti-pattern code across multiple axes (dead code, duplication, complexity, nesting, god functions/files, recursion) and proposes LLM-assisted fixes. This document is the reference for all decisions made to date.
 
