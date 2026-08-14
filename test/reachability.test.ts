@@ -1,6 +1,7 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { buildSymbolGraph } from "../src/graph/symbol-graph.js";
 import {
@@ -187,5 +188,200 @@ describe("findTaintedFiles", () => {
   test("still flags a genuinely dynamic JS import even shaped like the Python false positive", () => {
     const tainted = findTaintedFiles([{ file: "dyn2.ts", text: "const m = import(\n    moduleName\n);" }]);
     expect(tainted.has("dyn2.ts")).toBe(true);
+  });
+
+  describe("dict-literal dispatch tables (rec-20260814-001)", () => {
+    test("AC-1: same-file direct dict-literal assignment is not tainted", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "direct.py",
+          text: [
+            "def run(action, args):",
+            "    handler_map = {",
+            '        "a": do_a,',
+            '        "b": do_b,',
+            "    }",
+            "    handler_map[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("direct.py")).toBe(false);
+    });
+
+    test("AC-2: same-file method-returning-literal-dict is not tainted (real pip shape)", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "method.py",
+          text: [
+            "class IndexCommand(Command):",
+            "    def handler_map(self):",
+            "        return {",
+            '            "versions": self.get_available_package_versions,',
+            "        }",
+            "",
+            "    def run(self, options, args):",
+            "        handler_map = self.handler_map()",
+            "        action = args[0]",
+            "        handler_map[action](options, args[1:])",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("method.py")).toBe(false);
+    });
+
+    test("AC-3: an imported dispatch table (not bound in this file) still taints", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "imported.py",
+          text: [
+            "from tasks import CLI_TASKS",
+            "",
+            "def dispatch(action, env, args):",
+            "    return CLI_TASKS[action](env, args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("imported.py")).toBe(true);
+    });
+
+    test("AC-3: a dispatch table bound from a function parameter still taints", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "param.py",
+          text: [
+            "def dispatch(handler_map, action, args):",
+            "    handler_map[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("param.py")).toBe(true);
+    });
+
+    test("AC-3: a dict built via post-hoc mutation still taints", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "mutated.py",
+          text: [
+            "d = {}",
+            'd["a"] = do_a',
+            "def dispatch(action, args):",
+            "    d[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("mutated.py")).toBe(true);
+    });
+
+    test("AC-3: a comprehension-built dict still taints", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "comprehension.py",
+          text: [
+            "handler_map = {name: fn for name, fn in pairs}",
+            "def dispatch(action, args):",
+            "    handler_map[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("comprehension.py")).toBe(true);
+    });
+
+    test("AC-3: a dict(...) call-built table still taints (dict() is out of scope)", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "dictcall.py",
+          text: [
+            "handler_map = dict(a=do_a, b=do_b)",
+            "def dispatch(action, args):",
+            "    handler_map[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("dictcall.py")).toBe(true);
+    });
+
+    test("AC-3: globals()[name]() still taints — receiver is a call, not a bare identifier", () => {
+      const tainted = findTaintedFiles([
+        { file: "globals2.py", text: "globals()[name]()" },
+      ]);
+      expect(tainted.has("globals2.py")).toBe(true);
+    });
+
+    test("AC-3: an attribute-chain receiver (self.tbl[k](...)) still taints", () => {
+      const taintedSelf = findTaintedFiles([
+        {
+          file: "attr_self.py",
+          text: [
+            "class C:",
+            "    def dispatch(self, action, args):",
+            "        self.tbl[action](args)",
+          ].join("\n"),
+        },
+      ]);
+      expect(taintedSelf.has("attr_self.py")).toBe(true);
+
+      const taintedMod = findTaintedFiles([
+        {
+          file: "attr_mod.py",
+          text: ["def dispatch(action, args):", "    mod.tbl[action](args)"].join(
+            "\n",
+          ),
+        },
+      ]);
+      expect(taintedMod.has("attr_mod.py")).toBe(true);
+    });
+
+    test("AC-3: the same literal-dict shape in a .ts file still taints (Python-only suppression)", () => {
+      const tainted = findTaintedFiles([
+        {
+          file: "direct.ts",
+          text: [
+            "const handlerMap = {",
+            "  a: doA,",
+            "  b: doB,",
+            "};",
+            "handlerMap[action](args);",
+          ].join("\n"),
+        },
+      ]);
+      expect(tainted.has("direct.ts")).toBe(true);
+    });
+
+    test("AC-4: real python-realrepo corpus — 3 pip dict-literal sites clear, 2 genuinely-dynamic sites stay tainted", async () => {
+      const testDir = dirname(fileURLToPath(import.meta.url));
+      const root = join(
+        testDir,
+        "fixtures/python-realrepo/pip/pip/_internal/commands",
+      );
+      const httpieCore = join(
+        testDir,
+        "fixtures/python-realrepo/httpie/httpie/manager/core.py",
+      );
+      const files = {
+        index: join(root, "index.py"),
+        cache: join(root, "cache.py"),
+        configuration: join(root, "configuration.py"),
+        commandsInit: join(root, "__init__.py"),
+        httpieCore,
+      };
+      const sources = await Promise.all(
+        Object.entries(files).map(async ([key, file]) => ({
+          key,
+          file,
+          text: await readFile(file, "utf8"),
+        })),
+      );
+      const tainted = findTaintedFiles(
+        sources.map(({ file, text }) => ({ file, text })),
+      );
+
+      expect(tainted.has(files.index)).toBe(false);
+      expect(tainted.has(files.cache)).toBe(false);
+      expect(tainted.has(files.configuration)).toBe(false);
+      // Genuinely dynamic (importlib.import_module + getattr, string keys) — unrelated pattern, untouched by this fix.
+      expect(tainted.has(files.commandsInit)).toBe(true);
+      // CLI_TASKS is imported from a different file — cross-file resolution is out of scope (see Boundaries).
+      expect(tainted.has(files.httpieCore)).toBe(true);
+    });
   });
 });

@@ -1,5 +1,9 @@
+import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { classify } from "../src/analyze/classify.js";
+import { findTaintedFiles } from "../src/analyze/reachability.js";
 import type { ReachabilityResult } from "../src/analyze/reachability.js";
 import type { SymbolNode } from "../src/graph/types.js";
 
@@ -208,6 +212,33 @@ describe("classify — Python tier cap (AC-6, phase 45)", () => {
     });
     expect(f?.tier).toBe("maybe");
     expect(f?.autoFixEligible).toBe(false);
+  });
+});
+
+describe("classify — dict-literal dispatch taint fix integration (rec-20260814-001, AC-5)", () => {
+  test("a private zero-ref symbol in the real pip cache.py fixture is promoted from maybe to likely once findTaintedFiles no longer taints the file — still not certain, per the pre-existing Python hard cap above", async () => {
+    const fixture = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "fixtures/python-realrepo/pip/pip/_internal/commands/cache.py",
+    );
+    const text = await readFile(fixture, "utf8");
+    const tainted = findTaintedFiles([{ file: fixture, text }]);
+    expect(tainted.has(fixture)).toBe(false); // the fix under test
+
+    const [f] = classify({
+      nodes: [node("helper", false, fixture)],
+      reachability: [reach("helper", "dead", tainted.has(fixture))],
+    });
+    expect(f?.tier).toBe("likely");
+    expect(f?.autoFixEligible).toBe(false);
+
+    // Same symbol, taint forced back on: shows the delta the fix produces
+    // (maybe -> likely), not just a tier that the Python cap alone explains.
+    const [stillTainted] = classify({
+      nodes: [node("helper", false, fixture)],
+      reachability: [reach("helper", "dead", true)],
+    });
+    expect(stillTainted?.tier).toBe("maybe");
   });
 });
 

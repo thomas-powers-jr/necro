@@ -1,0 +1,32 @@
+{
+  "draftId": "70-01",
+  "tasks": {
+    "T1": {
+      "status": "DONE",
+      "notes": "Deviation from DRAFT: implemented as a synchronous text/regex heuristic in reachability.ts instead of getParser()/tree-sitter. Reason: getParser() is async (WASM init) and findTaintedFiles is synchronous with ~5 test-file callers plus engine/model.ts:217 — going async would be a wide, out-of-scope signature change, and parse.ts:20-25 explicitly notes dead-code/fix paths deliberately avoid triggering the heavy parser. Also scoped BOTH literal-binding shapes (direct assignment AND self-call/return-dict) to Python-only (isPythonFile gate), not just the method-return shape — no JS/TS corpus evidence exists to justify touching that path. Added a balanced-brace body check (isLiteralDictBody) to reject empty-then-mutated dicts and comprehensions, which a naive regex would have wrongly resolved. AC-1/2/3 fixture tests + all pre-existing findTaintedFiles tests green (20/20 in test/reachability.test.ts).",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-14T03:43:56.501Z"
+    },
+    "T2": {
+      "status": "DONE",
+      "notes": "Update: cadence_verify_coverage AC-6 initially returned satisfied:true via token collision with phase-45/phase-49's pre-existing (AC-6) tags in classify.test.ts/python-realrepo-accuracy-gate.test.ts, not real phase-70 coverage. Added a phase-70-owned test/reachability-taint-fix-accuracy-gate.test.ts (reuses scan()/realrepo-eval.ts helpers, does not retitle the phase-49 file) so AC-6 has genuine coverage; re-ran verify_coverage and confirmed the new file is now among the matched files.",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/test/classify.test.ts",
+        "/home/thomas/projects/necro/test/reachability-taint-fix-accuracy-gate.test.ts"
+      ],
+      "updatedAt": "2026-08-14T03:47:25.124Z"
+    },
+    "T3": {
+      "status": "DONE",
+      "notes": "Deviation from DRAFT AC-5 wording: the target tier is `likely`, not `certain`. Discovered mid-build that classify.ts:94-101 hard-caps every Python dead-code finding at `likely` (AC-6, phase 45) independently of taint — a Python symbol can never reach `certain`/auto-fix-eligible regardless of this fix. Corrected AC-5's text in the DRAFT to state this explicitly and cite the pre-existing test (test/classify.test.ts:186-193) that documents the cap. Added an integration test in test/classify.test.ts that runs findTaintedFiles over the real pip cache.py fixture and confirms the resulting tier is maybe->likely, not maybe->certain.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-14T03:44:11.570Z"
+    },
+    "T4": {
+      "status": "DONE",
+      "notes": "Re-ran full suite after adding the AC-6-owned test and strengthening AC-5's classify integration test with a same-symbol still-tainted control: npm test 817 passed / 6 skipped (pre-existing), npm run typecheck clean, npm run lint clean. cadence_verify_coverage AC-1..AC-6 all satisfied with phase-70-owned test evidence.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-14T03:47:31.313Z"
+    }
+  }
+}

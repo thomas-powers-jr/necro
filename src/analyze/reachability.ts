@@ -152,11 +152,18 @@ export function tracePath(
   return null;
 }
 
-// Shared across languages: both JS/TS and Python have `eval`/computed dispatch.
+// Shared across languages: both JS/TS and Python have `eval`.
 const SHARED_TAINT_PATTERNS: RegExp[] = [
   /\beval\s*\(/, // eval
-  /\[\s*[A-Za-z_$][\w$]*\s*\]\s*\(/, // string/computed dispatch: obj[name]() — also covers Python's globals()[name]()
 ];
+
+// string/computed dispatch: obj[name]() — also covers Python's globals()[name]().
+// Optionally captures a bare identifier receiver immediately before `[` (no
+// intervening `.`/`)`/`]`) so a same-file literal-dict binding can suppress
+// this specific match; an unresolved or absent receiver still taints, so this
+// stays a superset of the old receiver-blind pattern.
+const BRACKET_CALL_TAINT_PATTERN =
+  /([A-Za-z_$][\w$]*)?\s*\[\s*[A-Za-z_$][\w$]*\s*\]\s*\(/g;
 
 // JS/TS-only: a bare `import(...)` call is a dynamic-import expression there.
 // Excluded from Python, where the identical text shape — `import (\n    Name,`
@@ -173,16 +180,100 @@ const PYTHON_ONLY_TAINT_PATTERNS: RegExp[] = [
   /\bexec\s*\(/, // exec
 ];
 
+/**
+ * A same-file dict-literal binding for `ident` makes a bracket-call match
+ * resolvable: its values are ordinary identifier references the graph
+ * already tracks, so it isn't the unresolvable dispatch this taint exists
+ * for (rec-20260814-001). Scoped to the evidenced Python real-corpus shapes
+ * only (pip's `handler_map = self.handler_map()` / `return {...}` pattern) —
+ * no JS/TS corpus evidence exists for this, so JS/TS bracket-calls keep
+ * tainting unconditionally, matching the pre-fix behavior.
+ */
+/**
+ * Whether the `{` at `openBraceIndex` opens a genuine literal-dict body:
+ * non-empty (an empty `{}` later populated by mutation, e.g.
+ * `d = {}; d["a"] = v`, must NOT resolve — that's exactly the
+ * unresolvable-at-a-glance shape this taint guards) and not a comprehension
+ * (`{k: v for k, v in pairs}` has runtime-computed, not enumerable, values).
+ */
+function isLiteralDictBody(text: string, openBraceIndex: number): boolean {
+  let depth = 0;
+  for (let i = openBraceIndex; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        const body = text.slice(openBraceIndex + 1, i);
+        return body.trim().length > 0 && !/\bfor\b/.test(body);
+      }
+    }
+  }
+  return false; // unbalanced — bail conservatively, leave tainted
+}
+
+function isSameFileLiteralDictBinding(
+  file: string,
+  text: string,
+  ident: string,
+): boolean {
+  if (!isPythonFile(file)) return false;
+  const id = ident.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // (a) direct literal assignment: `ident = {...}`.
+  const directAssign = new RegExp(`(^|\\n)\\s*${id}\\s*=\\s*\\{`).exec(text);
+  if (directAssign) {
+    const openBrace = directAssign.index + directAssign[0].length - 1;
+    if (isLiteralDictBody(text, openBrace)) return true;
+  }
+
+  // (b) `ident = self.ident()` where `def ident(self...):` returns a literal
+  // dict — the real pip shape. Independent of (a): either succeeding
+  // suppresses; (a) failing must not short-circuit (b).
+  const selfCallAssign = new RegExp(
+    `(^|\\n)\\s*${id}\\s*=\\s*self\\s*\\.\\s*${id}\\s*\\(\\s*\\)`,
+  );
+  const methodReturnsDict = new RegExp(
+    `def\\s+${id}\\s*\\([^)]*\\)\\s*(->[^:\\n]+)?:\\s*\\n\\s*return\\s*\\{`,
+  ).exec(text);
+  if (selfCallAssign.test(text) && methodReturnsDict) {
+    const openBrace = methodReturnsDict.index + methodReturnsDict[0].length - 1;
+    if (isLiteralDictBody(text, openBrace)) return true;
+  }
+
+  return false;
+}
+
+/** Whether the file has at least one bracket-call dispatch site the graph can't resolve. */
+function hasUnresolvedBracketDispatch(file: string, text: string): boolean {
+  BRACKET_CALL_TAINT_PATTERN.lastIndex = 0;
+  let match = BRACKET_CALL_TAINT_PATTERN.exec(text);
+  while (match) {
+    const receiver = match[1];
+    if (!receiver || !isSameFileLiteralDictBinding(file, text, receiver)) {
+      return true;
+    }
+    match = BRACKET_CALL_TAINT_PATTERN.exec(text);
+  }
+  return false;
+}
+
 /** Detect files containing dynamic dispatch the static graph cannot resolve. */
 export function findTaintedFiles(
   sources: Array<{ file: string; text: string }>,
 ): Set<string> {
   const tainted = new Set<string>();
   for (const { file, text } of sources) {
-    const patterns = isPythonFile(file)
-      ? [...SHARED_TAINT_PATTERNS, ...PYTHON_ONLY_TAINT_PATTERNS]
-      : [...SHARED_TAINT_PATTERNS, ...JS_ONLY_TAINT_PATTERNS];
-    if (patterns.some((re) => re.test(text))) tainted.add(file);
+    const languagePatterns = isPythonFile(file)
+      ? PYTHON_ONLY_TAINT_PATTERNS
+      : JS_ONLY_TAINT_PATTERNS;
+    const patterns = [...SHARED_TAINT_PATTERNS, ...languagePatterns];
+    if (
+      patterns.some((re) => re.test(text)) ||
+      hasUnresolvedBracketDispatch(file, text)
+    ) {
+      tainted.add(file);
+    }
   }
   return tainted;
 }
