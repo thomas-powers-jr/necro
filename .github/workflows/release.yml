@@ -1,6 +1,8 @@
 name: Release
 
-# Publishes @thomas-powers-jr/necro to npm when a v* tag is pushed.
+# Publishes @thomas-powers-jr/necro to npm when a v* tag is pushed, then
+# mirrors the release on GitHub with that version's CHANGELOG.md section as
+# the notes.
 # Release flow: bump package.json (npm version X.Y.Z), commit, then
 #   git tag vX.Y.Z && git push origin main --tags
 # The job below refuses to publish if the tag and package.json disagree.
@@ -10,7 +12,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write # create the GitHub Release
   id-token: write # npm provenance (public repo + OIDC)
 
 jobs:
@@ -53,3 +55,24 @@ jobs:
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Pulls this version's section out of CHANGELOG.md (between its
+      # "## [X.Y.Z]" heading and the next "## [" heading) to use as the
+      # GitHub Release notes, so the two stay in sync automatically.
+      - name: Extract CHANGELOG section
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v pfx="## [${VERSION}]" '
+            index($0, pfx) == 1 { found=1; next }
+            found && index($0, "## [") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::No CHANGELOG.md section found for ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
