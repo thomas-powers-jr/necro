@@ -1,0 +1,35 @@
+{
+  "draftId": "72-01",
+  "tasks": {
+    "T1": {
+      "status": "DONE",
+      "notes": "grammarFor/Grammar extended for .php; new test (parse.test.ts) covers every construct AC-1 lists, no parse errors.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T03:32:23.709Z"
+    },
+    "T2": {
+      "status": "DONE",
+      "notes": "FUNCTION_KINDS + categoryOf PHP arms added (method_declaration, anonymous_function_creation_expression, else_if_clause, foreach_statement, case_statement, match_conditional_expression, and/or/xor extension). Match-arm decision (AC-4): match_conditional_expression counts as case, match_default_expression deliberately does not, mirroring the pre-existing switch case_statement/default_clause asymmetry. Golden tests in syntactic-ir.test.ts hand-verify cyclomatic counts.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T03:32:28.855Z"
+    },
+    "T3": {
+      "status": "DONE",
+      "notes": "IDENTIFIER_KINDS +\"name\"; LITERAL_KINDS +\"boolean\" only — \"null\" deliberately NOT added, correcting the DRAFT's original plan after finding existing precedent (JS's null / Python's None both stay unfolded, not joined to LIT). $ sigil verified to fall through to its own token kind, asserted explicitly in a test.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T03:32:34.385Z"
+    },
+    "T4": {
+      "status": "DONE",
+      "notes": "\"vendor\" added to SKIP_DIRS. Audited the rest of SKIP_DIRS's membership for PHP-legitimate directory-name collisions (node_modules/.git/dist/coverage/__pycache__/.venv/venv/.tox/.eggs) — none found.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T03:32:39.041Z"
+    },
+    "T5": {
+      "status": "DONE_WITH_CONCERNS",
+      "notes": "Full suite 843 passed/6 skipped/0 failed; typecheck clean; lint clean. Regression guard (DEFAULT_CONFIG.include excludes **/*.php) added to discover.test.ts, matching where Python's own AC-1 equivalent lives.\n\nDEVIATION FROM DRAFT (documented, not silent): the manual spot-check via a real `necro scan` on a hand-written PHP fixture (a class with elseif/foreach/for/while/match/try-catch/ternary/boolean-ops, plus a deliberately bad 7-param 4-deep-nesting function) crashed with \"Could not find source file\" — ts-morph's lenient TS parser produced partial declarations from PHP class/method syntax, then crashed resolving references against them since the underlying TS Program never recognized the .php extension. This is a hard blocker for Phase A's own \"independently shippable, real user value\" criterion, since scan() always builds the reachability model first regardless of the complexity-axis flag (src/engine/index.ts:56) — there's no way to reach the syntactic axis without it. Fixed with a narrow, deliberate exception to this draft's \"DO NOT touch src/engine/model.ts\" boundary: added src/graph/php/language.ts (isPhpFile, mirroring isPythonFile) and excluded .php from tsFiles the same way .py already is (model.ts:132-146). This does NOT build a real PHP symbol graph (still zero PHP dead-code claims, Phase C scope untouched) — it only prevents the crash. Covered by a new regression test in model-python-merge.test.ts (red without the fix, reproduced with realistic PHP class syntax — a trivial one-line function did not reproduce it). Re-ran full suite + typecheck + lint after the fix: still clean (843/6/0). Re-ran the manual spot-check after rebuilding dist/: no crash, correct findings (godFunction flagged god-function + nesting; cyclomatic numbers hand-verified: classify=4, sumTo=4, label=3; zero dead-code findings as intended for Phase A).",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T03:32:51.007Z"
+    }
+  }
+}

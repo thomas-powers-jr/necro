@@ -107,3 +107,40 @@ describe("discoverFiles — Python (AC-4)", () => {
     expect(names).toEqual(["real.ts"]);
   });
 });
+
+describe("discoverFiles — PHP (AC-6, AC-7)", () => {
+  test("DEFAULT_CONFIG.include does NOT contain .php — PHP stays config-gated (AC-7)", () => {
+    expect(DEFAULT_CONFIG.include).not.toContain("**/*.php");
+  });
+
+  test("discovers .php when a user explicitly includes it", async () => {
+    await writeFile(join(dir, "src", "real.php"), "");
+
+    const config = { ...DEFAULT_CONFIG, include: [...DEFAULT_CONFIG.include, "**/*.php"] };
+    const files = await discoverFiles(dir, config);
+    const names = files.map((f) => f.split("/").pop()).sort();
+    expect(names).toEqual(["real.php"]);
+  });
+
+  test("skips vendor/ unconditionally, like node_modules/ (AC-6)", async () => {
+    await mkdir(join(dir, "vendor"), { recursive: true });
+    await writeFile(join(dir, "vendor", "ghost.php"), "");
+    await writeFile(join(dir, "src", "real.php"), "");
+
+    const config = { ...DEFAULT_CONFIG, include: [...DEFAULT_CONFIG.include, "**/*.php"] };
+    const files = await discoverFiles(dir, config);
+    const names = files.map((f) => f.split("/").pop()).sort();
+    expect(names).toEqual(["real.php"]);
+  });
+
+  test("build/ still skips as bundler output and a Python build/ package is still discovered under a PHP-inclusive config (no interaction with the new vendor/ skip)", async () => {
+    await mkdir(join(dir, "build"), { recursive: true });
+    await writeFile(join(dir, "build", "bundle.php"), "");
+    await writeFile(join(dir, "src", "real.php"), "");
+
+    const config = { ...DEFAULT_CONFIG, include: [...DEFAULT_CONFIG.include, "**/*.php"] };
+    const files = await discoverFiles(dir, config);
+    const names = files.map((f) => f.split("/").pop()).sort();
+    expect(names).toEqual(["real.php"]);
+  });
+});

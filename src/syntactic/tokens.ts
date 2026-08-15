@@ -14,6 +14,8 @@ const IDENTIFIER_KINDS = new Set([
   "shorthand_property_identifier_pattern",
   "type_identifier",
   "private_property_identifier",
+  // PHP: one shared leaf node for variable/function/class/method names
+  "name",
 ]);
 
 const LITERAL_KINDS = new Set([
@@ -27,6 +29,13 @@ const LITERAL_KINDS = new Set([
   "integer",
   "float",
   "string_content",
+  // PHP: `integer`/`float`/`string_content` above are already identical to
+  // Python's node types, verified shared. `boolean` is PHP's single node for
+  // both true/false (unlike JS's separate leaves) — folds to LIT to match
+  // JS's true/false treatment. `null` is deliberately NOT added here — it
+  // falls through to its own `null` token kind, matching how JS's `null`
+  // and Python's `none` both stay unfolded rather than joining LIT.
+  "boolean",
 ]);
 
 /**

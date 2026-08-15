@@ -8,6 +8,7 @@ import {
 import type { NecroConfig } from "../config.js";
 import { discoverFiles } from "../discover.js";
 import { globMatcher } from "../glob.js";
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import {
   buildPythonModuleMap,
@@ -130,10 +131,19 @@ export async function buildReachabilityModel(
   );
 
   // Language partition (AC-5): the TS graph (ts-morph) covers everything but
-  // `.py`; the Python graph is hand-rolled (no ts-morph equivalent exists).
-  // Node ids are file-path-based, so concatenating the two never collides.
+  // `.py`/`.php`; the Python graph is hand-rolled (no ts-morph equivalent
+  // exists). `.php` is excluded from `tsFiles` too (phase 72-01) — ts-morph's
+  // parser is lenient enough that PHP class/method syntax can produce
+  // partial, garbled declarations it treats as real, and then crashes
+  // ("Could not find source file") trying to resolve references against them
+  // via the underlying TS Program, which never recognized the `.php`
+  // extension in the first place. `.php` files simply contribute zero graph
+  // nodes for now (no PHP dead-code claims until a real PHP symbol graph
+  // ships) — the syntactic axis (complexity/dup/hotspots) still sees them via
+  // `sources`/`files` below, independent of this graph. Node ids are
+  // file-path-based, so concatenating graphs never collides.
   const pyFiles = files.filter(isPythonFile);
-  const tsFiles = files.filter((f) => !isPythonFile(f));
+  const tsFiles = files.filter((f) => !isPythonFile(f) && !isPhpFile(f));
   const tsGraph = await buildSymbolGraphCached(targetPath, tsFiles, {
     isTestFile,
     packagePaths: workspaces.packagePaths,

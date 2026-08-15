@@ -46,6 +46,11 @@ const FUNCTION_KINDS = new Set([
   // Python
   "function_definition",
   "lambda",
+  // PHP (function_definition and arrow_function above are shared node-type
+  // names with Python/JS respectively — verified identical, no PHP-specific
+  // entry needed for those two forms)
+  "method_declaration",
+  "anonymous_function_creation_expression",
 ]);
 
 /** Map a tree-sitter node type to a control category (the only language-aware step). */
@@ -56,25 +61,43 @@ function categoryOf(
     case "if_statement":
     case "elif_clause": // Python: a sibling clause of `if`, not a nested if — its own branch
     case "if_clause": // Python: comprehension `if` filter
+    case "else_if_clause": // PHP: elseif — a sibling `alternative:` clause, same shape as Python's elif_clause
       return { category: "branch", nests: true };
     case "for_statement":
     case "for_in_statement":
     case "while_statement":
     case "do_statement":
     case "for_in_clause": // Python: comprehension `for`
+    case "foreach_statement": // PHP
       return { category: "loop", nests: true };
     case "switch_case":
     case "case_clause": // Python: `match`/`case`
+    case "case_statement": // PHP: switch's case
+    case "match_conditional_expression": // PHP: match's labeled arms — each is a genuine
+      // decision point, same as a switch case. `match_default_expression` and PHP's
+      // `default_statement` (switch) are deliberately NOT mapped here, mirroring the
+      // pre-existing precedent that switch's `default:` never counted either.
       return { category: "case", nests: true };
     case "catch_clause":
     case "except_clause": // Python
       return { category: "catch", nests: true };
     case "ternary_expression":
-    case "conditional_expression": // Python: `a if b else c`
+    case "conditional_expression": // Python: `a if b else c`; PHP: `a ? b : c` (same node type as Python's)
       return { category: "ternary", nests: true };
     case "binary_expression": {
       const op = node.childForFieldName("operator")?.text;
-      if (op === "&&" || op === "||" || op === "??")
+      // PHP shares this exact node type + `operator` field with JS, and also
+      // routes its word-form `and`/`or`/`xor` operators through it (verified:
+      // unlike Python, PHP does not use a separate node type for word-form
+      // boolean operators).
+      if (
+        op === "&&" ||
+        op === "||" ||
+        op === "??" ||
+        op === "and" ||
+        op === "or" ||
+        op === "xor"
+      )
         return { category: "boolean", nests: false };
       return null;
     }

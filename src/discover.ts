@@ -14,6 +14,8 @@ const SKIP_DIRS = new Set([
   "venv",
   ".tox",
   ".eggs",
+  // PHP: composer's dependency-install dir, the node_modules/ equivalent
+  "vendor",
 ]);
 
 /**

@@ -69,4 +69,72 @@ lam = lambda x: x + 1
     const tree = parser.parse(src);
     expect(tree?.rootNode.hasError).toBe(false);
   });
+
+  test("parses PHP source covering every construct AC-1 lists, without error (AC-1)", async () => {
+    const parser = await getParser("/mod.php");
+    const src = `<?php
+namespace Foo\\Bar;
+
+use Foo\\Bar\\Baz;
+
+interface Shape { public function area(): float; }
+trait Greet { public function hello() { echo "hi"; } }
+
+class Point implements Shape {
+    public function __construct(private float $x, private float $y = 0.0) {}
+
+    public function area(): float {
+        if ($this->x) {
+            return $this->x;
+        } elseif ($this->y) {
+            return $this->y;
+        } else {
+            return 0.0;
+        }
+    }
+
+    public static function doIt(int $n): int {
+        $total = 0;
+        foreach (range(1, $n) as $i) {
+            $total += $i;
+        }
+        for ($j = 0; $j < $n; $j++) {
+            $total++;
+        }
+        while ($total > 1000) {
+            $total--;
+        }
+        switch ($n) {
+            case 1:
+                break;
+            default:
+                break;
+        }
+        $y = match($n) {
+            1, 2 => 'a',
+            default => 'b',
+        };
+        try {
+            $total += 1;
+        } catch (\\Exception $e) {
+            $total = 0;
+        } finally {
+            echo "done";
+        }
+        $t = $total ? $total : 0;
+        $ok = $total && $n || $total and $n or !$n;
+        return $total;
+    }
+}
+
+$c = function($x) use ($n) { return $x + $n; };
+$a = fn($x) => $x * 2;
+
+function top($a, $b = 1) {
+    return $a + $b;
+}
+`;
+    const tree = parser.parse(src);
+    expect(tree?.rootNode.hasError).toBe(false);
+  });
 });
