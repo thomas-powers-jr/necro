@@ -40,8 +40,9 @@ src/
 ## Layers
 
 - **CLI / config / discovery** — input handling.
-- **graph** — the language-specific adapter (the only place TypeScript
-  specifics live; see the [core invariant](/necro/architecture/)).
+- **graph** — the language-specific adapters (TypeScript/JavaScript via
+  ts-morph, Python hand-rolled; the only place language specifics live; see
+  the [core invariant](/necro/architecture/)).
 - **plugins** — framework awareness via the
   [plugin contract](/necro/architecture/plugins/).
 - **analyze** — language-agnostic [reachability](/necro/architecture/reachability/)

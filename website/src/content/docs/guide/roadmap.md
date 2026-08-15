@@ -43,7 +43,7 @@ None of the following is implemented yet.
 
 | Area | Planned capability |
 |---|---|
-| Accuracy | Python `certain` tier (corpus validation to raise it off the `likely` cap); istanbul-JSON coverage; cascading re-analysis after a fix |
+| Accuracy | Python `certain` tier (corpus validation to raise it off the `likely` cap); istanbul-JSON coverage |
 | Detectors | Cross-language & fuzzy (Type-3) clones; god-function responsibility-clustering |
 | Scoring | Per-line & recency-weighted churn, ownership weighting |
 | Fixes | `test-only` auto-apply (report-only today); cascading re-analysis after a fix |

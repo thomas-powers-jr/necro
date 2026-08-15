@@ -4,7 +4,7 @@
 CLI that finds anti-pattern code and proposes LLM-assisted fixes — and refuses
 to guess where pure-static tools can't.
 
-> **Status: v1.6.0 — published on [npm](https://www.npmjs.com/package/@thomas-powers-jr/necro).**
+> **Status: v1.7.0 — published on [npm](https://www.npmjs.com/package/@thomas-powers-jr/necro).**
 > Necro analyzes **TypeScript/JavaScript and Python** across
 > multiple axes — dead code (with confidence tiers, evidence chains, and the
 > `test-only` verdict), complexity, risk hotspots, and duplication — plus safe
@@ -240,7 +240,7 @@ Necro runs zero-config. To customize which files it analyzes, add a
 
 ```json
 {
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.cts"],
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.cts", "**/*.py"],
   "ignore": ["**/node_modules/**", "**/dist/**"],
   "entries": ["src/server.ts"]
 }
@@ -262,7 +262,8 @@ A scan is a pipeline of small, independently tested stages:
 
 ```
 discover files
-  → build symbol graph        (ts-morph; the only language-specific part)
+  → build symbol graph        (ts-morph for TS/JS, hand-rolled for Python —
+                                the only language-specific stage)
   → resolve entries           (prod entries + framework plugins)
   → two-color reachability    (+ taint)            ─┐ dead code → tiers
   → classify into tiers                             │
@@ -280,8 +281,9 @@ returns code, never a patch).
 
 The **core invariant**: language-specific code lives only in the symbol-graph
 adapter. Reachability, classification, scoring, and reporting are
-language-agnostic — so adding a language (Python is planned) means writing one
-new adapter, not touching the engine. Test files are recognized from your real
+language-agnostic — so adding a language means writing one new adapter, not
+touching the engine (Python is the proof: its adapter is hand-rolled, no
+ts-morph equivalent exists for it). Test files are recognized from your real
 test-runner config (jest `--showConfig` / vitest), so test infrastructure is
 never flagged dead. The same engine backs the [MCP server](#use-from-an-ai-agent-mcp),
 which reuses `scan` and the worktree verifier without forking their logic.

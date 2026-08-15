@@ -19,8 +19,9 @@ Necro runs zero-config. To customize which files it analyzes, add a
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `include` | `string[]` | `["**/*.ts", "**/*.tsx"]` | Globs of files to analyze. |
+| `include` | `string[]` | `["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.cts", "**/*.py"]` | Globs of files to analyze. |
 | `ignore` | `string[]` | `["**/node_modules/**", "**/dist/**"]` | Globs to exclude. |
+| `entries` | `string[]` | none | Globs declaring production entry points directly — the fix for the fail-closed entry-resolution warning when automatic resolution finds none. |
 
 Each key you set **replaces** its default (values are merged per key, not
 concatenated). If you set `ignore`, include the defaults you still want:
@@ -36,9 +37,9 @@ Declaration files (`*.d.ts`) and the directories `node_modules`, `.git`,
 
 ## What's not configurable yet
 
-Entry-point overrides, per-detector thresholds, and tier tuning are
-[planned](/necro/guide/roadmap/). Today, entry points are resolved
-automatically from `package.json` and your test-runner config.
+Confidence-tier cutoffs (what counts as `certain` vs. `likely` vs. `maybe`)
+aren't user-tunable yet. Entry-point overrides (`entries`) and per-detector
+thresholds (`complexity`) already are.
 
 See the full [configuration reference](/necro/reference/configuration/) for the
 authoritative key list.

@@ -15,7 +15,7 @@ verbatim.
 ### `include`
 
 - **Type:** `string[]`
-- **Default:** `["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.cts"]`
+- **Default:** `["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mts", "**/*.cts", "**/*.py"]`
 
 Globs of files to analyze.
 
