@@ -68,7 +68,7 @@
     "@biomejs/biome": "^2.5.4",
     "@types/diff": "^7.0.2",
     "@types/node": "^20.19.42",
-    "@types/picomatch": "^3.0.2",
+    "@types/picomatch": "^4.0.3",
     "@vitest/coverage-v8": "^2.1.9",
     "esbuild": "^0.24.0",
     "knip": "^6.27.0",
