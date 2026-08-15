@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # necro.config.json seeds entries (bin + bench scripts) so the src/-only
       # self-scan isn't the degenerate 0-entry case, and src/.necro-baseline.json
