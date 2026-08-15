@@ -88,6 +88,7 @@ export const DEFAULT_CONFIG: NecroConfig = {
     "**/*.jsx",
     "**/*.mts",
     "**/*.cts",
+    "**/*.py",
   ],
   ignore: ["**/node_modules/**", "**/dist/**"],
   complexity: DEFAULT_COMPLEXITY,

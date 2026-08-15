@@ -44,8 +44,8 @@ describe("discoverFiles (AC-1, AC-3)", () => {
 });
 
 describe("discoverFiles — Python (AC-4)", () => {
-  test("DEFAULT_CONFIG.include does not contain .py — Python stays opt-in (regression guard)", () => {
-    expect(DEFAULT_CONFIG.include).not.toContain("**/*.py");
+  test("DEFAULT_CONFIG.include contains .py — Python is default-on (AC-1)", () => {
+    expect(DEFAULT_CONFIG.include).toContain("**/*.py");
   });
 
   test("discovers .py when a user explicitly includes it, and skips .pyi stubs", async () => {
@@ -73,16 +73,31 @@ describe("discoverFiles — Python (AC-4)", () => {
 
   test("discovers a build/ subpackage under a Python-only config (AC-1)", async () => {
     await mkdir(join(dir, "build"), { recursive: true });
+    // Real evidence shape (pip/_internal/operations/build/__init__.py):
+    // a build/ dir is only treated as a Python package if it directly
+    // contains __init__.py — that's the per-directory signal, not the config.
+    await writeFile(join(dir, "build", "__init__.py"), "");
     await writeFile(join(dir, "build", "build_tracker.py"), "");
     await writeFile(join(dir, "src", "real.py"), "");
 
     const config = { ...DEFAULT_CONFIG, include: ["**/*.py"] };
     const files = await discoverFiles(dir, config);
     const names = files.map((f) => f.split("/").pop()).sort();
-    expect(names).toEqual(["build_tracker.py", "real.py"]);
+    expect(names).toEqual(["__init__.py", "build_tracker.py", "real.py"]);
   });
 
-  test("still skips build/ under the default JS/TS-only config (AC-2)", async () => {
+  test("build/ without __init__.py is skipped even under a Python-only config (no overcorrection) (AC-3)", async () => {
+    await mkdir(join(dir, "build"), { recursive: true });
+    await writeFile(join(dir, "build", "build_tracker.py"), "");
+    await writeFile(join(dir, "src", "real.py"), "");
+
+    const config = { ...DEFAULT_CONFIG, include: ["**/*.py"] };
+    const files = await discoverFiles(dir, config);
+    const names = files.map((f) => f.split("/").pop()).sort();
+    expect(names).toEqual(["real.py"]);
+  });
+
+  test("still skips build/-as-bundler-output under the default config, even though it now includes Python too (AC-2)", async () => {
     await mkdir(join(dir, "build"), { recursive: true });
     await writeFile(join(dir, "build", "bundle.ts"), "");
     await writeFile(join(dir, "src", "real.ts"), "");

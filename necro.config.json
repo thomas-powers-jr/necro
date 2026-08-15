@@ -4,5 +4,6 @@
     "bench/cli-bench.ts",
     "bench/cli-checkout.ts",
     "bench/cli-competitors.ts"
-  ]
+  ],
+  "ignore": ["**/node_modules/**", "**/dist/**", "test/fixtures/**"]
 }

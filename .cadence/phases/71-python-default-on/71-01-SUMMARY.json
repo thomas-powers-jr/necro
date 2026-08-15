@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "draftId": "71-01",
+  "completedAt": "2026-08-14T23:03:48.110Z",
+  "acResults": [
+    {
+      "id": "AC-1",
+      "pass": true,
+      "note": "src/config.ts DEFAULT_CONFIG.include now has **/*.py; test/discover.test.ts:47 (AC-1) asserts it directly",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-2",
+      "pass": true,
+      "note": "src/discover.ts's isPythonPackageDir per-directory check; test/discover.test.ts (AC-2) — build/ with .ts bundle still skipped under the flipped default config",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-3",
+      "pass": true,
+      "note": "test/discover.test.ts:74 (pre-existing AC-1 tag, now with real __init__.py fixture) plus new no-overcorrection test tagged (AC-3) — both prove build/-as-real-package still discovered, build/-without-__init__.py still skipped",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-4",
+      "pass": true,
+      "note": "test/engine.test.ts new 'AC-4: a mixed TS+Python repo scans correctly under the unmodified default config' test, real scan() entry point, bare DEFAULT_CONFIG, no id collisions",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-5",
+      "pass": true,
+      "note": "README.md + website roadmap.md + classify.ts comment corrected; new test/docs-accuracy.test.ts (AC-5) asserts stale substrings absent from all three, real automated check",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-6",
+      "pass": true,
+      "note": "repo-wide grep confirms discover.ts's config.include-Python-sniff pattern is now fully removed (not just singular) — T2 replaced it with the per-directory check entirely",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-7",
+      "pass": true,
+      "note": "test/python-realrepo-accuracy-gate.test.ts (pre-existing AC-5/AC-6 tags) still passes unchanged floors — precision 0.900, recall 0.692",
+      "evidence": "assertion"
+    },
+    {
+      "id": "AC-8",
+      "pass": true,
+      "note": "necro.config.json ignore now excludes test/fixtures/**; new test/self-scan-fixture-guard.test.ts (AC-8) confirms zero .py files discovered there from repo root; additionally empirically confirmed via git-stash A/B compare that the CI self-scan (path: src) returns byte-identical finding counts (6) before and after this phase's changes",
+      "evidence": "assertion"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "draft-read",
+      "status": "ran"
+    },
+    {
+      "gate": "structural-verifier",
+      "status": "ran"
+    },
+    {
+      "gate": "boundary-scan",
+      "status": "skipped",
+      "skipReason": "boundaryEnforcement is not \"block\""
+    },
+    {
+      "gate": "task-verify-required",
+      "status": "ran"
+    },
+    {
+      "gate": "build-test-must-pass",
+      "status": "skipped",
+      "skipReason": "no test command configured — build-test-must-pass cannot verify your tests ran; this settle will NOT confirm the suite passes. Set verification.testCommand in .cadence/config.json to enable real enforcement."
+    },
+    {
+      "gate": "test-coverage",
+      "status": "ran"
+    },
+    {
+      "gate": "interactive-verdict",
+      "status": "skipped",
+      "skipReason": "not requested (no --deep / --interactive, not in gate set)"
+    },
+    {
+      "gate": "deep-verify",
+      "status": "skipped",
+      "skipReason": "not requested (no --deep / --interactive, not in gate set)"
+    },
+    {
+      "gate": "code-review",
+      "status": "skipped",
+      "skipReason": "not in the active tier × profile gate set"
+    },
+    {
+      "gate": "security-audit",
+      "status": "skipped",
+      "skipReason": "not in the active tier × profile gate set"
+    }
+  ],
+  "taskResults": [
+    {
+      "id": "T1",
+      "status": "DONE",
+      "notes": "Added \"**/*.py\" to DEFAULT_CONFIG.include (src/config.ts). Updated test/discover.test.ts:47's regression-guard test to assert the opposite, tagged (AC-1). Confirmed red-then-green on that test. As predicted by AC-2/T2, this now breaks test/discover.test.ts's \"still skips build/ under the default JS/TS-only config (AC-2)\" test — expected, fixed in T2."
+    },
+    {
+      "id": "T2",
+      "status": "DONE",
+      "notes": "Replaced skipDirsFor's per-config isPython binary with a per-directory isPythonPackageDir(dir) check (stat for __init__.py directly inside a \"build\" dir) in src/discover.ts. Updated test/discover.test.ts: renamed AC-2 test for accuracy, added __init__.py to the AC-1 Python-package build/ fixture (matches real pip evidence shape) plus a new no-overcorrection test for build/ without __init__.py. Full suite (127 files, 818 tests) green after T1+T2 — no other regressions surfaced."
+    },
+    {
+      "id": "T3",
+      "status": "DONE",
+      "notes": "Added a new test to test/engine.test.ts (already exercised scan() with DEFAULT_CONFIG, natural home) proving a mixed TS+Python repo scans correctly via the real scan() entry point under the bare, unmodified DEFAULT_CONFIG — no manual config override, unlike model-python-merge.test.ts's existing coverage at the buildReachabilityModel level. Tagged (AC-4). Passes."
+    },
+    {
+      "id": "T4",
+      "status": "DONE",
+      "notes": "Corrected the stale \"isn't corpus-validated yet\" claim in README.md, website/src/content/docs/guide/roadmap.md (mirrored line), and classify.ts's comment (also updated to reference rec-20260814-008 for the still-open certain-tier question). Added \"python\" to package.json keywords and an [Unreleased] CHANGELOG entry. New test/docs-accuracy.test.ts asserts the stale substrings are absent from all three files, tagged (AC-5) — real automated check, not manual read-through. Passes."
+    },
+    {
+      "id": "T5",
+      "status": "DONE",
+      "notes": "npm test: 129 files / 823 tests passed, 6 skipped (up from 127/818 pre-phase — 2 new test files). npm run typecheck: clean. npm run lint: clean (biome auto-fixed one formatting line in discover.ts). python-realrepo-accuracy-gate: precision/recall floors hold unchanged. Repo-wide greps for AC-6: the config.include-Python-sniff pattern is now fully gone from discover.ts (T2 replaced it with per-directory isPythonPackageDir), not just confirmed singular — even stronger than the AC required."
+    },
+    {
+      "id": "T6",
+      "status": "DONE",
+      "notes": "Added \"test/fixtures/**\" to necro.config.json's ignore list (repo-root only, not DEFAULT_CONFIG.ignore — preserves node_modules/dist too). New test/self-scan-fixture-guard.test.ts loads this repo's real config via loadConfig and asserts discoverFiles at repo root finds zero .py files under test/fixtures/, scoped to .py per advisor guidance (test/fixtures/ already has .ts/.js fixtures unrelated to this phase). Red-then-green confirmed, tagged (AC-8)."
+    }
+  ],
+  "decisions": [],
+  "deferred": [],
+  "skillAudit": {
+    "required": [],
+    "invoked": [
+      "superpowers:test-driven-development",
+      "handoff",
+      "superpowers:brainstorming",
+      "superpowers:writing-plans",
+      "cadence-scout"
+    ]
+  },
+  "coverageScheme": "bare",
+  "coverageMode": "assertion",
+  "stateAtSettle": {
+    "loopPositionBeforeSettle": "BUILD",
+    "revision": 1102,
+    "sessionSubagentSpawns": 183
+  },
+  "assurance": {
+    "verifierRollup": [],
+    "evidenceTally": {
+      "ai-verified": 0,
+      "executed": 0,
+      "assertion": 8,
+      "mention": 0,
+      "unverified": 0
+    },
+    "overall": "weak"
+  },
+  "contentHash": {
+    "algorithm": "sha256",
+    "value": "bec6013ab80243f875cfb4fbf8974ba87017aad179df73d02f39b057c411d0ea"
+  }
+}

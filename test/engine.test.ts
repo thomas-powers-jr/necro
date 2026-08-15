@@ -39,6 +39,25 @@ describe("scan", () => {
     expect(result.findings.some((f) => f.node.id.endsWith(":orphan"))).toBe(true);
     expect(result.findings.some((f) => f.node.id.endsWith(":live"))).toBe(false);
   });
+
+  // Phase 71 (AC-4): the design doc flagged "the graph merge must be tested
+  // with both languages present" as an open risk of flipping Python
+  // default-on. test/model-python-merge.test.ts covers this at the
+  // buildReachabilityModel level, but only with a manually-overridden
+  // config.include — this exercises the real entry point under the bare
+  // DEFAULT_CONFIG an actual user gets for free, with no necro.config.json.
+  test("AC-4: a mixed TS+Python repo scans correctly under the unmodified default config", async () => {
+    await write("src/index.ts", "export function tsFn() { return 1; }\n");
+    await write("pkg/mod.py", "def py_fn():\n    pass\n");
+
+    const result = await scan(dir, DEFAULT_CONFIG, { complexity: false });
+
+    const names = result.findings.map((f) => f.node.name).sort();
+    expect(names).toEqual(["py_fn", "tsFn"]);
+
+    const ids = result.findings.map((f) => f.node.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });
 
 describe("buildReachabilityModel", () => {

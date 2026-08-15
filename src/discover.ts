@@ -1,4 +1,4 @@
-import { readdir } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import type { NecroConfig } from "./config.js";
 import { globMatcher } from "./glob.js";
@@ -19,13 +19,20 @@ const SKIP_DIRS = new Set([
 /**
  * `build` is only a build-output dir in JS/TS projects — in Python it's a
  * legitimate subpackage name (e.g. pip's `pip/_internal/operations/build/`).
- * Skip it unless `config.include` targets Python, so Python configs don't
- * silently lose a `build/` package from discovery.
+ * Deciding this per-`config` (as opposed to per-directory) doesn't compose:
+ * `DEFAULT_CONFIG.include` now targets both JS/TS and Python at once, so a
+ * single repo can have real `build/` bundler output *and* a real `build/`
+ * Python subpackage in different places. Decide per-directory instead: a
+ * `build/` dir that directly contains `__init__.py` is a Python package
+ * (don't skip); otherwise treat it as a conventional build-output dir (skip).
  */
-function skipDirsFor(config: NecroConfig): Set<string> {
-  const isPython = config.include.some((glob) => glob.includes("*.py"));
-  if (isPython) return SKIP_DIRS;
-  return new Set(SKIP_DIRS).add("build");
+async function isPythonPackageDir(dir: string): Promise<boolean> {
+  try {
+    await stat(join(dir, "__init__.py"));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -39,7 +46,6 @@ export async function discoverFiles(
 ): Promise<string[]> {
   const include = globMatcher(config.include);
   const ignore = globMatcher(config.ignore);
-  const skipDirs = skipDirsFor(config);
   const out: string[] = [];
 
   async function walk(dir: string): Promise<void> {
@@ -47,7 +53,9 @@ export async function discoverFiles(
     for (const entry of entries) {
       const abs = join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (skipDirs.has(entry.name)) continue;
+        if (SKIP_DIRS.has(entry.name)) continue;
+        if (entry.name === "build" && !(await isPythonPackageDir(abs)))
+          continue;
         const rel = relative(target, abs);
         if (ignore(rel)) continue;
         await walk(abs);

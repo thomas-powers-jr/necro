@@ -4,13 +4,13 @@
 
 **Project:** necro
 **Loop position:** IDLE
-**Active phase:** 70-literal-dispatch-table-taint
+**Active phase:** 71-python-default-on
 **Active draft:** (none)
 **Tier:** (n/a)
 
 ## Telemetry
 - Token utilization: 100%
-- Subagent spawns this session: 178
+- Subagent spawns this session: 184
 - Last handoff: SESSION-2026-08-14.md
 
 ## Counts

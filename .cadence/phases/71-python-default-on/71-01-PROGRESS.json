@@ -1,0 +1,56 @@
+{
+  "draftId": "71-01",
+  "tasks": {
+    "T1": {
+      "status": "DONE",
+      "notes": "Added \"**/*.py\" to DEFAULT_CONFIG.include (src/config.ts). Updated test/discover.test.ts:47's regression-guard test to assert the opposite, tagged (AC-1). Confirmed red-then-green on that test. As predicted by AC-2/T2, this now breaks test/discover.test.ts's \"still skips build/ under the default JS/TS-only config (AC-2)\" test — expected, fixed in T2.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-14T22:55:22.933Z"
+    },
+    "T2": {
+      "status": "DONE",
+      "notes": "Replaced skipDirsFor's per-config isPython binary with a per-directory isPythonPackageDir(dir) check (stat for __init__.py directly inside a \"build\" dir) in src/discover.ts. Updated test/discover.test.ts: renamed AC-2 test for accuracy, added __init__.py to the AC-1 Python-package build/ fixture (matches real pip evidence shape) plus a new no-overcorrection test for build/ without __init__.py. Full suite (127 files, 818 tests) green after T1+T2 — no other regressions surfaced.",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/src/discover.ts",
+        "/home/thomas/projects/necro/test/discover.test.ts"
+      ],
+      "updatedAt": "2026-08-14T22:57:04.695Z"
+    },
+    "T3": {
+      "status": "DONE",
+      "notes": "Added a new test to test/engine.test.ts (already exercised scan() with DEFAULT_CONFIG, natural home) proving a mixed TS+Python repo scans correctly via the real scan() entry point under the bare, unmodified DEFAULT_CONFIG — no manual config override, unlike model-python-merge.test.ts's existing coverage at the buildReachabilityModel level. Tagged (AC-4). Passes.",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/test/engine.test.ts"
+      ],
+      "updatedAt": "2026-08-14T22:57:38.823Z"
+    },
+    "T4": {
+      "status": "DONE",
+      "notes": "Corrected the stale \"isn't corpus-validated yet\" claim in README.md, website/src/content/docs/guide/roadmap.md (mirrored line), and classify.ts's comment (also updated to reference rec-20260814-008 for the still-open certain-tier question). Added \"python\" to package.json keywords and an [Unreleased] CHANGELOG entry. New test/docs-accuracy.test.ts asserts the stale substrings are absent from all three files, tagged (AC-5) — real automated check, not manual read-through. Passes.",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/README.md",
+        "/home/thomas/projects/necro/website/src/content/docs/guide/roadmap.md",
+        "/home/thomas/projects/necro/src/analyze/classify.ts",
+        "/home/thomas/projects/necro/package.json",
+        "/home/thomas/projects/necro/CHANGELOG.md",
+        "/home/thomas/projects/necro/test/docs-accuracy.test.ts"
+      ],
+      "updatedAt": "2026-08-14T22:59:04.392Z"
+    },
+    "T6": {
+      "status": "DONE",
+      "notes": "Added \"test/fixtures/**\" to necro.config.json's ignore list (repo-root only, not DEFAULT_CONFIG.ignore — preserves node_modules/dist too). New test/self-scan-fixture-guard.test.ts loads this repo's real config via loadConfig and asserts discoverFiles at repo root finds zero .py files under test/fixtures/, scoped to .py per advisor guidance (test/fixtures/ already has .ts/.js fixtures unrelated to this phase). Red-then-green confirmed, tagged (AC-8).",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/test/self-scan-fixture-guard.test.ts",
+        "/home/thomas/projects/necro/necro.config.json"
+      ],
+      "updatedAt": "2026-08-14T22:59:57.713Z"
+    },
+    "T5": {
+      "status": "DONE",
+      "notes": "npm test: 129 files / 823 tests passed, 6 skipped (up from 127/818 pre-phase — 2 new test files). npm run typecheck: clean. npm run lint: clean (biome auto-fixed one formatting line in discover.ts). python-realrepo-accuracy-gate: precision/recall floors hold unchanged. Repo-wide greps for AC-6: the config.include-Python-sniff pattern is now fully gone from discover.ts (T2 replaced it with per-directory isPythonPackageDir), not just confirmed singular — even stronger than the AC required.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-14T23:00:54.467Z"
+    }
+  }
+}

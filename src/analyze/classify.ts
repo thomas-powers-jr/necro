@@ -92,8 +92,12 @@ export function classify(input: ClassifyInput): ClassifiedFinding[] {
     const isPublicApi = publicApiIds.has(node.id);
     const collapse = input.entryCollapse ?? false;
     // Python dead-code findings are hard-capped at `likely` (AC-6, phase 45):
-    // the resolver's recall/precision hasn't been corpus-validated yet
-    // (Phase D), so a Python symbol never earns `certain`/auto-fix eligible.
+    // Phase D (phase 48) corpus-validated report-only accuracy (precision
+    // 0.90, recall 0.69, clearing the 0.85/0.5 default-on floor — see phase
+    // 71), but that's verdict-level, not tier-stratified specifically among
+    // symbols that would earn `certain`; a Python symbol never earns
+    // `certain`/auto-fix eligible until that harder claim is validated too
+    // (rec-20260814-008).
     const rawTier = collapse
       ? "maybe"
       : deadTier(node, result, isPublicApi, cov, effect);

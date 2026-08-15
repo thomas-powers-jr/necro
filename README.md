@@ -363,8 +363,11 @@ tests and clear acceptance criteria match how the codebase is built.
   entries) — with confidence tiers, evidence chains, the `test-only` verdict,
   test-runner awareness (jest/vitest), and coverage ingestion (lcov for
   TS/JS, [Cobertura](https://cobertura.github.io/cobertura/) `coverage.xml`
-  for Python). Python findings are capped at `likely` — the resolver's
-  recall/precision isn't corpus-validated to the TS plane's bar yet.
+  for Python). Python is included by default alongside TypeScript/JavaScript;
+  findings are still capped at `likely` (never `certain`/auto-fix-eligible) —
+  the resolver is corpus-validated (precision 0.90, recall 0.69 on a 46-case
+  real-repo corpus, clearing the 0.85/0.5 floor) for report-only findings,
+  but not yet to the bar auto-fix eligibility would need.
 - **Complexity** detectors (nesting, cyclomatic, cognitive, god-function) with
   configurable thresholds.
 - **Risk hotspots**: CRAP score (complexity² × (1 − coverage)³ + complexity) ×

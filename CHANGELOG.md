@@ -4,6 +4,16 @@ All notable changes to `@manehorizons/necro` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Python is now scanned by default.** `.py` files are included in every
+  scan out of the box — no `necro.config.json` needed. The real-repo
+  accuracy gate (precision 0.90, recall 0.69 on a 46-case pip/httpie corpus)
+  has cleared the default-on floor since 2026-07-18; Python findings remain
+  capped at `likely` (never auto-fix eligible) until tier-stratified
+  `certain`-tier accuracy is separately validated.
+
 ## [1.6.0] — 2026-07-21
 
 ### Added

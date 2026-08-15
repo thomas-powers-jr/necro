@@ -32,6 +32,7 @@
     "dead-code",
     "static-analysis",
     "typescript",
+    "python",
     "mcp",
     "code-quality",
     "duplication",

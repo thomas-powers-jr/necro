@@ -19,7 +19,7 @@ yet.
   `__main__`/`if __name__ == "__main__"`), pytest test-entry rooting, and
   library quarantine (a `pyproject.toml` with `[project]` + `[build-system]`
   treats every exported symbol as public API).
-- Confidence tiers: [`certain` / `likely` / `maybe`](/necro/guide/understanding-results/) (Python findings are capped at `likely` — the resolver's recall/precision isn't corpus-validated to the same bar as the TS plane yet).
+- Confidence tiers: [`certain` / `likely` / `maybe`](/necro/guide/understanding-results/) (Python is included by default; findings are still capped at `likely` — the resolver is corpus-validated at precision 0.90/recall 0.69 on a 46-case real-repo corpus, clearing the 0.85/0.5 default-on floor, but not yet to the bar `certain`/auto-fix eligibility would need).
 - [Evidence chains](/necro/guide/evidence-chains/) on every finding.
 - The [`test-only`](/necro/guide/test-only/) verdict.
 - [Test-runner awareness](/necro/guide/framework-awareness/) (jest / vitest).
