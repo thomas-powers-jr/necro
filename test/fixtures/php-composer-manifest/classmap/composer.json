@@ -1,0 +1,5 @@
+{
+  "autoload": {
+    "classmap": ["src/legacy/", "src/Compat.php"]
+  }
+}

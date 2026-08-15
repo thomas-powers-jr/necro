@@ -1,0 +1,46 @@
+{
+  "draftId": "74-01",
+  "tasks": {
+    "T1": {
+      "status": "DONE",
+      "notes": "composer-manifest.ts: psr-4/psr-0/classmap/files parsing from composer.json + autoload-dev, best-effort empty on missing/malformed. 9 tests green.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T14:38:22.051Z"
+    },
+    "T3": {
+      "status": "DONE",
+      "notes": "declared-symbols.ts: namespace-tracking walk (braceless+braced+global), class/interface/trait/enum extraction, function_definition excluded. Live-verified node types. 7 tests green.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T14:38:25.960Z"
+    },
+    "T2": {
+      "status": "DONE",
+      "notes": "composer-autoload.ts: psr-4/psr-0 path-derived (longest-prefix-first, per advisor review), classmap scan filtered from discovered set (not independent fs walk, per advisor review). 10 tests green.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T14:38:26.120Z"
+    },
+    "T4": {
+      "status": "DONE",
+      "notes": "import-parser.ts: namespace/use-import parser, all 5 verified use-clause shapes (simple/single-segment/aliased/grouped/function-const). 8 tests green.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T14:38:29.725Z"
+    },
+    "T5": {
+      "status": "DONE",
+      "notes": "resolve-import.ts: PHP name-resolution rules, unified first-segment-vs-imports algorithm (generalizes DRAFT's AC-3 text, corrected inline). 9 tests green.",
+      "touchedFiles": [],
+      "updatedAt": "2026-08-15T14:38:29.888Z"
+    },
+    "T6": {
+      "status": "DONE",
+      "notes": "Fixture-tree suite (5 tests) + AC-5 regression guard + import-resolution-rate harness (src/bench/php-import-resolution-rate.ts). Real-repo measurement against guzzle@d1cbca7/phpunit@757d6b1 (cloned to scratchpad, not vendored): guzzle 355/360 (98.6%), phpunit 7164/7263 (98.6%), both clear the 95% floor. Locality/measurement logic went through 3 advisor-caught, empirically-forced refinements (containing-namespace populated check; namespace-alias exclusion via cross-import+self evidence; isResolved-first ordering to avoid a real false-exclusion bug found via phpunit's resolved-count dropping). Full suite 909 green, typecheck+lint clean.",
+      "touchedFiles": [
+        "/home/thomas/projects/necro/src/bench/php-import-resolution-rate.ts",
+        "/home/thomas/projects/necro/test/bench-php-import-resolution-rate.test.ts",
+        "/home/thomas/projects/necro/test/graph-php-composer-resolver-fixtures.test.ts",
+        "/home/thomas/projects/necro/.cadence/phases/74-php-composer-resolver/74-01-DRAFT.md"
+      ],
+      "updatedAt": "2026-08-15T14:56:50.911Z"
+    }
+  }
+}

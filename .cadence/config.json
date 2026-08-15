@@ -64,6 +64,7 @@
       "**/*.test.ts",
       "**/*.test.tsx"
     ],
+    "testCommand": "npm test",
     "coverageMode": "assertion",
     "coverageProfiles": []
   },
