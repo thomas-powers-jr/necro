@@ -1,6 +1,6 @@
 {
-  "name": "@manehorizons/necro",
-  "version": "1.6.0",
+  "name": "@thomas-powers-jr/necro",
+  "version": "1.7.0",
   "description": "Local, free, polyglot CLI that finds anti-pattern code and proposes LLM-assisted fixes.",
   "license": "MIT",
   "private": false,
@@ -22,11 +22,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manehorizons/necro.git"
+    "url": "git+https://github.com/thomas-powers-jr/necro.git"
   },
-  "homepage": "https://github.com/manehorizons/necro#readme",
+  "homepage": "https://github.com/thomas-powers-jr/necro#readme",
   "bugs": {
-    "url": "https://github.com/manehorizons/necro/issues"
+    "url": "https://github.com/thomas-powers-jr/necro/issues"
   },
   "keywords": [
     "dead-code",

@@ -26,8 +26,8 @@ describe("library exports (dist/index.js + exports map)", () => {
     await writeFile(
       join(checkDir, "consumer.ts"),
       `
-import { scan, explain, buildReachabilityModel, loadConfig } from "@manehorizons/necro";
-import type { NecroConfig, ScanResult, ExplainResult } from "@manehorizons/necro";
+import { scan, explain, buildReachabilityModel, loadConfig } from "@thomas-powers-jr/necro";
+import type { NecroConfig, ScanResult, ExplainResult } from "@thomas-powers-jr/necro";
 
 const _s: typeof scan = scan;
 const _e: typeof explain = explain;
@@ -72,7 +72,7 @@ void [_s, _e, _m, _c, _cfg, _sr, _er];
     // "exports" map — NOT a relative path into dist/. A relative import here
     // would silently pass even if the exports map's "import" condition were
     // wrong, since it'd never actually be consulted.
-    const lib = await import("@manehorizons/necro");
+    const lib = await import("@thomas-powers-jr/necro");
     expect(typeof lib.scan).toBe("function");
     expect(typeof lib.explain).toBe("function");
     expect(typeof lib.buildReachabilityModel).toBe("function");
@@ -87,7 +87,7 @@ void [_s, _e, _m, _c, _cfg, _sr, _er];
     // "exports" map — NOT a relative path into dist/. A relative import here
     // would silently pass even if the exports map's "import" condition were
     // wrong, since it'd never actually be consulted.
-    const lib = await import("@manehorizons/necro");
+    const lib = await import("@thomas-powers-jr/necro");
       const config = await lib.loadConfig(fixtureDir);
       const result = await lib.scan(fixtureDir, config);
       const names = result.findings.map((f: { node: { name: string } }) => f.node.name);

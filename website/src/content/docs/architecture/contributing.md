@@ -10,7 +10,7 @@ sidebar:
 Requires **Node.js ≥ 20**.
 
 ```bash
-git clone https://github.com/manehorizons/necro
+git clone https://github.com/thomas-powers-jr/necro
 cd necro
 npm install
 ```
@@ -54,5 +54,5 @@ is built.
 
 This site lives in `website/` (Astro Starlight) and is independent of the CLI
 package. See the repo README and the
-[design spec](https://github.com/manehorizons/necro/blob/main/docs/necro-design-spec.md)
+[design spec](https://github.com/thomas-powers-jr/necro/blob/main/docs/necro-design-spec.md)
 for the full rationale behind the architecture.

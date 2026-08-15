@@ -39,7 +39,7 @@ jobs:
         run: npm run build
 
       # Runs after Build: test/library-exports.test.ts imports the package
-      # by its own name (`@manehorizons/necro`, phase 55's self-reference
+      # by its own name (`@thomas-powers-jr/necro`, phase 55's self-reference
       # check), which only resolves once `dist/` exists.
       - name: Typecheck
         run: npm run typecheck

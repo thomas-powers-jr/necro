@@ -52,6 +52,6 @@ None of the following is implemented yet.
 
 ## Distribution
 
-Necro ships as [`@manehorizons/necro`](https://www.npmjs.com/package/@manehorizons/necro)
-on npm — `npm install -g @manehorizons/necro` or `npx -y @manehorizons/necro`.
+Necro ships as [`@thomas-powers-jr/necro`](https://www.npmjs.com/package/@thomas-powers-jr/necro)
+on npm — `npm install -g @thomas-powers-jr/necro` or `npx -y @thomas-powers-jr/necro`.
 See the [installation guide](/necro/guide/installation/).

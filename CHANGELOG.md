@@ -1,12 +1,19 @@
 # Changelog
 
-All notable changes to `@manehorizons/necro` are documented here. The format
+All notable changes to `@thomas-powers-jr/necro` are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-08-15
+
 ### Changed
+- **npm scope moved to `@thomas-powers-jr/necro`.** The GitHub org this
+  project lives under was renamed from `manehorizons` to `thomas-powers-jr`;
+  the npm package follows the same rename. `@manehorizons/necro` is
+  deprecated and points installers at the new name — existing installs keep
+  working, but new installs/imports should use `@thomas-powers-jr/necro`.
 - **Python is now scanned by default.** `.py` files are included in every
   scan out of the box — no `necro.config.json` needed. The real-repo
   accuracy gate (precision 0.90, recall 0.69 on a 46-case pip/httpie corpus)

@@ -59,7 +59,7 @@ export interface SarifLog {
 
 const SCHEMA =
   "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
-const INFO_URI = "https://github.com/manehorizons/necro";
+const INFO_URI = "https://github.com/thomas-powers-jr/necro";
 
 const LEVEL: Record<Severity, SarifLevel> = {
   high: "error",

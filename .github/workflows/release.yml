@@ -1,6 +1,6 @@
 name: Release
 
-# Publishes @manehorizons/necro to npm when a v* tag is pushed.
+# Publishes @thomas-powers-jr/necro to npm when a v* tag is pushed.
 # Release flow: bump package.json (npm version X.Y.Z), commit, then
 #   git tag vX.Y.Z && git push origin main --tags
 # The job below refuses to publish if the tag and package.json disagree.

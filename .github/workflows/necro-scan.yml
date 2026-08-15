@@ -1,7 +1,7 @@
 name: necro scan
 
 # Dogfoods the composite necro Action: runs necro, uploads SARIF to
-# code-scanning. The Action pulls the *published* CLI (npx @manehorizons/necro),
+# code-scanning. The Action pulls the *published* CLI (npx @thomas-powers-jr/necro),
 # so this only works once a release carrying --sarif/--fail-on (>= 1.1.0) is on
 # npm. Triggered on PRs and manually (not push) to avoid firing against an older
 # published CLI; validate with `workflow_dispatch` after the 1.1.0 release.

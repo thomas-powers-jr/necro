@@ -1,6 +1,6 @@
 name: necro
 description: Run necro static analysis, write SARIF, and surface findings in code-scanning.
-author: manehorizons
+author: thomas-powers-jr
 
 inputs:
   path:
@@ -16,7 +16,7 @@ inputs:
     required: false
     default: necro.sarif
   version:
-    description: npm version or dist-tag of @manehorizons/necro to run.
+    description: npm version or dist-tag of @thomas-powers-jr/necro to run.
     required: false
     default: latest
   upload:
@@ -46,7 +46,7 @@ runs:
         if [ -n "$NECRO_FAIL_ON" ]; then
           args+=(--fail-on "$NECRO_FAIL_ON")
         fi
-        npx -y "@manehorizons/necro@$NECRO_VERSION" "${args[@]}"
+        npx -y "@thomas-powers-jr/necro@$NECRO_VERSION" "${args[@]}"
 
     - name: Upload SARIF to code-scanning
       # always() so findings surface even when --fail-on fails the run above.

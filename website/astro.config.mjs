@@ -5,8 +5,8 @@ import starlightLinksValidator from "starlight-links-validator";
 
 // https://astro.build/config
 export default defineConfig({
-  // GitHub Pages project site: https://manehorizons.github.io/necro
-  site: "https://manehorizons.github.io",
+  // GitHub Pages project site: https://thomas-powers-jr.github.io/necro
+  site: "https://thomas-powers-jr.github.io",
   base: "/necro",
 
   // The Accuracy page imports the committed benchmark snapshot from the repo
@@ -23,7 +23,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/manehorizons/necro",
+          href: "https://github.com/thomas-powers-jr/necro",
         },
       ],
       plugins: [starlightLinksValidator()],

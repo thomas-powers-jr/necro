@@ -31,7 +31,7 @@ otherwise (private)      → certain (autoFixEligible: true)
 
 A `test-only` node becomes a `test-only` verdict (tier `maybe`,
 `autoFixEligible: false`) — report-only by
-[locked decision](https://github.com/manehorizons/necro/blob/main/docs/necro-design-spec.md).
+[locked decision](https://github.com/thomas-powers-jr/necro/blob/main/docs/necro-design-spec.md).
 Alive nodes are not findings.
 
 ## Evidence is attached here

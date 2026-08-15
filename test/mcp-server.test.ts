@@ -176,7 +176,7 @@ describe("necro MCP server", () => {
     test("shows a `claude mcp add` one-liner alongside the JSON registration snippet", async () => {
       const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
       const readme = await readFile(join(repoRoot, "README.md"), "utf8");
-      expect(readme).toContain("claude mcp add necro -- npx -y @manehorizons/necro mcp");
+      expect(readme).toContain("claude mcp add necro -- npx -y @thomas-powers-jr/necro mcp");
     });
   });
 });

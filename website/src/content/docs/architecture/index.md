@@ -9,7 +9,7 @@ This section is for contributors. It explains how a scan flows through the
 engine and the design rules that keep Necro extensible.
 
 For the full rationale and locked decisions, see the
-[design spec](https://github.com/manehorizons/necro/blob/main/docs/necro-design-spec.md)
+[design spec](https://github.com/thomas-powers-jr/necro/blob/main/docs/necro-design-spec.md)
 in the repo.
 
 ## The pipeline

@@ -9,7 +9,7 @@ sidebar:
 necro [options] [command]
 ```
 
-Install with `npm install -g @manehorizons/necro`, or invoke via `npx necro …`.
+Install with `npm install -g @thomas-powers-jr/necro`, or invoke via `npx necro …`.
 Examples below use `necro` for brevity.
 
 ## Global options
@@ -298,7 +298,7 @@ Register it with your agent (Claude Code example):
 ```json
 {
   "mcpServers": {
-    "necro": { "command": "npx", "args": ["-y", "@manehorizons/necro", "mcp"] }
+    "necro": { "command": "npx", "args": ["-y", "@thomas-powers-jr/necro", "mcp"] }
   }
 }
 ```

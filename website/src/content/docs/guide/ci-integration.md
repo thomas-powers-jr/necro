@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: manehorizons/necro/.github/actions/necro@v1
+      - uses: thomas-powers-jr/necro/.github/actions/necro@v1
         with:
           path: src
           fail-on: high # high | medium | low; empty to surface-only

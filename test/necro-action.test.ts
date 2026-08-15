@@ -15,7 +15,7 @@ describe("necro composite Action", () => {
   });
 
   test("runs necro with --sarif and conditional --fail-on (AC-2)", () => {
-    expect(action).toContain("@manehorizons/necro");
+    expect(action).toContain("@thomas-powers-jr/necro");
     expect(action).toContain("--sarif");
     expect(action).toContain("--fail-on");
     // fail-on is only appended when non-empty (surface-only when unset)

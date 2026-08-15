@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -61,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx @manehorizons/cadence-host-claude-code hook"
+            "command": "npx @thomas-powers-jr/cadence-host-claude-code hook"
           }
         ],
         "_managedBy": "cadence"

@@ -12,23 +12,23 @@ Necro requires **Node.js ≥ 20**.
 Install the global `necro` command:
 
 ```bash
-npm install -g @manehorizons/necro
+npm install -g @thomas-powers-jr/necro
 necro scan src/
 ```
 
 Or run it without installing — ideal for agents and CI:
 
 ```bash
-npx -y @manehorizons/necro scan src/
+npx -y @thomas-powers-jr/necro scan src/
 ```
 
 The rest of this guide writes commands as `necro …`; substitute
-`npx -y @manehorizons/necro …` if you prefer not to install globally.
+`npx -y @thomas-powers-jr/necro …` if you prefer not to install globally.
 
 ## From source
 
 ```bash
-git clone https://github.com/manehorizons/necro
+git clone https://github.com/thomas-powers-jr/necro
 cd necro
 npm install
 npm run build

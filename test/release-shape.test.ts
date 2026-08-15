@@ -9,7 +9,7 @@ const root = (p: string): string => fileURLToPath(new URL(`../${p}`, import.meta
 
 describe("release / package shape", () => {
   test("package.json is shaped for a public scoped publish (AC-1)", () => {
-    expect(pkg.name).toBe("@manehorizons/necro");
+    expect(pkg.name).toBe("@thomas-powers-jr/necro");
     expect(pkg.private).toBe(false);
     expect(pkg.bin.necro).toBe("dist/cli.js");
     expect(pkg.files).toEqual(["dist"]);
@@ -18,9 +18,9 @@ describe("release / package shape", () => {
   });
 
   test("package.json carries npm-page metadata (AC-1)", () => {
-    expect(pkg.repository.url).toContain("github.com/manehorizons/necro");
-    expect(pkg.homepage).toContain("github.com/manehorizons/necro");
-    expect(pkg.bugs.url).toContain("github.com/manehorizons/necro/issues");
+    expect(pkg.repository.url).toContain("github.com/thomas-powers-jr/necro");
+    expect(pkg.homepage).toContain("github.com/thomas-powers-jr/necro");
+    expect(pkg.bugs.url).toContain("github.com/thomas-powers-jr/necro/issues");
     expect(pkg.keywords.length).toBeGreaterThan(0);
   });
 

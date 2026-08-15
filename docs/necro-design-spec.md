@@ -16,7 +16,7 @@ The product is named for the death/forensic theme that maps onto its design: tie
 
 > **Naming and namespacing**
 > - **Brand:** Necro
-> - **npm package:** scoped — `@manehorizons/necro` (or unscoped `necrojs` / `necro-ts`); the bare `necro` npm slug is taken by an unrelated package
+> - **npm package:** scoped — `@thomas-powers-jr/necro` (or unscoped `necrojs` / `necro-ts`); the bare `necro` npm slug is taken by an unrelated package
 > - **CLI command:** `necro` (the `bin` field is independent of the package name)
 > - **GitHub org:** `necrotool` (bare `necro` org is taken; `necrotool`, `necroscan`, `getnecro` are free)
 > - **Domain:** pending registrar check — `necrotool.dev` / `getnecro.dev` (`.dev`/`.sh` are the dev-tool norm)

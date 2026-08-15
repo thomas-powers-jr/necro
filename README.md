@@ -4,7 +4,7 @@
 CLI that finds anti-pattern code and proposes LLM-assisted fixes — and refuses
 to guess where pure-static tools can't.
 
-> **Status: v1.6.0 — published on [npm](https://www.npmjs.com/package/@manehorizons/necro).**
+> **Status: v1.6.0 — published on [npm](https://www.npmjs.com/package/@thomas-powers-jr/necro).**
 > Necro analyzes **TypeScript/JavaScript and Python** across
 > multiple axes — dead code (with confidence tiers, evidence chains, and the
 > `test-only` verdict), complexity, risk hotspots, and duplication — plus safe
@@ -42,21 +42,21 @@ Requires **Node.js ≥ 20**.
 Install globally from npm:
 
 ```bash
-npm install -g @manehorizons/necro
+npm install -g @thomas-powers-jr/necro
 necro scan src/
 ```
 
 Or run it with no install (handy for agents and CI):
 
 ```bash
-npx -y @manehorizons/necro scan src/
+npx -y @thomas-powers-jr/necro scan src/
 ```
 
 <details>
 <summary>Install from source instead</summary>
 
 ```bash
-git clone https://github.com/manehorizons/necro
+git clone https://github.com/thomas-powers-jr/necro
 cd necro
 npm install
 npm run build      # bundles the CLI to dist/cli.js
@@ -188,7 +188,7 @@ necro --version
 A successful scan exits `0` regardless of findings (non-zero only on internal
 error) **unless** `--fail-on <high|medium|low>` is set — then it exits `1` when a
 finding at or above that severity exists. See
-[CI integration](https://github.com/manehorizons/necro) for the SARIF + GitHub
+[CI integration](https://github.com/thomas-powers-jr/necro) for the SARIF + GitHub
 Action setup.
 
 ## Use from an AI agent (MCP)
@@ -220,7 +220,7 @@ Four read-only tools are exposed:
 Register it with your agent (Claude Code example):
 
 ```bash
-claude mcp add necro -- npx -y @manehorizons/necro mcp
+claude mcp add necro -- npx -y @thomas-powers-jr/necro mcp
 ```
 
 Or by hand:
@@ -228,7 +228,7 @@ Or by hand:
 ```json
 {
   "mcpServers": {
-    "necro": { "command": "npx", "args": ["-y", "@manehorizons/necro", "mcp"] }
+    "necro": { "command": "npx", "args": ["-y", "@thomas-powers-jr/necro", "mcp"] }
   }
 }
 ```
@@ -348,7 +348,7 @@ npm run build       # bundle the CLI (esbuild)
 ```
 
 Necro is built **test-first** (red → green → refactor) and planned with the
-[CADENCE](https://github.com/manehorizons/cadence) draft → build → settle
+[CADENCE](https://github.com/thomas-powers-jr/cadence) draft → build → settle
 workflow; phase artifacts live in `.cadence/`. Contributions that come with
 tests and clear acceptance criteria match how the codebase is built.
 
@@ -400,4 +400,4 @@ tests and clear acceptance criteria match how the codebase is built.
 
 ## License
 
-[MIT](LICENSE) © manehorizons.
+[MIT](LICENSE) © Thomas Powers.
