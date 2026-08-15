@@ -218,4 +218,73 @@ describe("runExtractDuplicate (AC-1, AC-4)", () => {
       expect(checksSeen).toEqual(["pytest"]);
     });
   });
+
+  describe("PHP + default checks (T7, phase 75)", () => {
+    let d: string;
+    let checksSeen: string[];
+    const recordingRunner = (): VerifyRunner => ({
+      createWorktree: async () => "/wt",
+      writeEdit: async () => {},
+      runCheck: async (_wt, command) => {
+        checksSeen.push(command);
+        return { ok: true, output: "" };
+      },
+      removeWorktree: async () => {},
+    });
+
+    const proposalWithPhp = (): DuplicateProposal => ({
+      summary: "extract loadId",
+      sharedFunction: "export function loadId(key) {\n  const r = db.query(key);\n  return r.id;\n}",
+      sharedFunctionFile: a,
+      edits: [
+        { file: a, startLine: 3, endLine: 4, replacement: "  return loadId('a');" },
+        { file: d, startLine: 2, endLine: 2, replacement: "    return loadId('d');" },
+      ],
+      rationale: "shared the query",
+    });
+
+    const findingWithPhp = (): DuplicationFinding => ({
+      tokens: 30,
+      locations: [
+        { file: a, startLine: 3, endLine: 4 },
+        { file: d, startLine: 2, endLine: 2 },
+      ],
+    });
+
+    beforeEach(async () => {
+      d = join(dir, "d.php");
+      await writeFile(d, "<?php\nfunction load_d() {\n  return db_query('d')['id'];\n}\n");
+      checksSeen = [];
+    });
+
+    test("a clone group touching a PHP location under default checks is skipped (AC-3)", async () => {
+      const client: RefactorClient = {
+        propose: vi.fn(async () => ({ ok: false as const, reason: "n/a" })),
+        proposeDuplicate: vi.fn(async () => ({ ok: true as const, proposal: proposalWithPhp() })),
+      };
+      const res = await runExtractDuplicate([findingWithPhp()], DEFAULT_LLM, client, {
+        verifyRunner: recordingRunner(),
+        repoRoot: dir,
+      });
+      expect(res.outcomes[0]?.badge).toEqual({
+        status: "skipped",
+        reason: expect.stringContaining("PHP"),
+      });
+      expect(checksSeen).toEqual([]);
+    });
+
+    test("an explicit --checks override with a PHP location still runs (AC-4)", async () => {
+      const client: RefactorClient = {
+        propose: vi.fn(async () => ({ ok: false as const, reason: "n/a" })),
+        proposeDuplicate: vi.fn(async () => ({ ok: true as const, proposal: proposalWithPhp() })),
+      };
+      const res = await runExtractDuplicate([findingWithPhp()], DEFAULT_LLM, client, {
+        verifyRunner: recordingRunner(),
+        repoRoot: dir,
+        checks: ["phpunit"],
+      });
+      expect(res.outcomes[0]?.badge?.status).toBe("green");
+      expect(checksSeen).toEqual(["phpunit"]);
+    });
+  });
 });

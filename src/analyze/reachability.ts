@@ -1,3 +1,4 @@
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import type { SymbolEdge, SymbolNode } from "../graph/types.js";
 
@@ -180,6 +181,14 @@ const PYTHON_ONLY_TAINT_PATTERNS: RegExp[] = [
   /\bexec\s*\(/, // exec
 ];
 
+// Intentionally empty — NOT a placeholder to fill in later. PHP's real
+// dynamic-dispatch detection (magic methods, call_user_func family, `$$var`,
+// `$obj->$method()`) is AST-based (`findPhpTaintedFiles`,
+// `src/graph/php/dynamic-dispatch.ts`) precisely to avoid the comment/
+// string-literal false positive a raw-text regex array like this one would
+// produce; do not add PHP regexes here. See `findTaintedFiles`'s docstring.
+const PHP_ONLY_TAINT_PATTERNS: RegExp[] = [];
+
 /**
  * A same-file dict-literal binding for `ident` makes a bracket-call match
  * resolvable: its values are ordinary identifier references the graph
@@ -258,7 +267,26 @@ function hasUnresolvedBracketDispatch(file: string, text: string): boolean {
   return false;
 }
 
-/** Detect files containing dynamic dispatch the static graph cannot resolve. */
+/**
+ * Detect files containing dynamic dispatch the static graph cannot resolve.
+ *
+ * Synchronous by design — a hot, regex-only pass over already-read source
+ * text (`readSources`'s whole-file text), shared by JS/TS and Python. PHP is
+ * deliberately given no language-specific pattern array here (`isPhpFile`
+ * files fall through with `languagePatterns = []`, so only
+ * `SHARED_TAINT_PATTERNS` — e.g. `eval(` — and `hasUnresolvedBracketDispatch`
+ * still apply to them, exactly as before): PHP's real dynamic-dispatch
+ * detection (magic methods, `call_user_func`/`call_user_func_array`, `$$var`,
+ * `$obj->$method()`) needs an actual AST walk to avoid false-positiving on a
+ * comment or string literal containing matching text, which requires
+ * `getParser` — async (WASM grammar load) — so it can't run inside this
+ * synchronous function. That detector lives in
+ * `src/graph/php/dynamic-dispatch.ts`'s `findPhpTaintedFiles`, computed
+ * separately and unioned into `taintedFiles` at the `buildReachabilityModel`
+ * call site (`src/engine/model.ts`), mirroring the exact precedent
+ * `buildPythonSymbolGraph`'s `starTaintedFiles` already set for the same
+ * sync/async mismatch (phase 75 T6).
+ */
 export function findTaintedFiles(
   sources: Array<{ file: string; text: string }>,
 ): Set<string> {
@@ -266,7 +294,9 @@ export function findTaintedFiles(
   for (const { file, text } of sources) {
     const languagePatterns = isPythonFile(file)
       ? PYTHON_ONLY_TAINT_PATTERNS
-      : JS_ONLY_TAINT_PATTERNS;
+      : isPhpFile(file)
+        ? PHP_ONLY_TAINT_PATTERNS
+        : JS_ONLY_TAINT_PATTERNS;
     const patterns = [...SHARED_TAINT_PATTERNS, ...languagePatterns];
     if (
       patterns.some((re) => re.test(text)) ||

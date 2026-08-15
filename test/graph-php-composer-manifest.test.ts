@@ -26,6 +26,7 @@ describe("readComposerManifest (AC-1)", () => {
     expect(manifest).toEqual({
       autoload: { psr4: {}, psr0: {}, classmap: [], files: [] },
       autoloadDev: { psr4: {}, psr0: {}, classmap: [], files: [] },
+      bin: [],
     });
   });
 
@@ -52,5 +53,20 @@ describe("readComposerManifest (AC-1)", () => {
   test("files entries preserved as a flat list", async () => {
     const manifest = await readComposerManifest(join(FIXTURES_ROOT, "files-autoload"));
     expect(manifest.autoload.files).toEqual(["src/bootstrap.php", "src/helpers.php"]);
+  });
+
+  test("top-level bin field as a bare string normalizes to string[] (75-01 T4, AC-4)", async () => {
+    const manifest = await readComposerManifest(join(FIXTURES_ROOT, "bin-string"));
+    expect(manifest.bin).toEqual(["bin/console"]);
+  });
+
+  test("top-level bin field as an array of strings is preserved (75-01 T4, AC-4)", async () => {
+    const manifest = await readComposerManifest(join(FIXTURES_ROOT, "bin-array"));
+    expect(manifest.bin).toEqual(["bin/console", "bin/worker"]);
+  });
+
+  test("no bin field returns an empty array, not undefined (75-01 T4, AC-4)", async () => {
+    const manifest = await readComposerManifest(join(FIXTURES_ROOT, "single-psr4"));
+    expect(manifest.bin).toEqual([]);
   });
 });

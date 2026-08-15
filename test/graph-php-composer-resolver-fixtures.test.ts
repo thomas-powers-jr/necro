@@ -59,17 +59,21 @@ describe("PHP composer resolver — fixture trees, end-to-end (AC-1, AC-2, AC-3)
   });
 });
 
-describe("PHP composer resolver — no reachability wiring yet (AC-5)", () => {
-  test("src/engine/model.ts does not import any of this phase's new resolver modules — wiring composer resolution into the reachability graph is Phase C, not this phase", async () => {
+describe("PHP composer resolver — reachability wiring (75-01 T3, AC-1)", () => {
+  // This guard used to assert the opposite ("model.ts does not import any of
+  // this phase's resolver modules — wiring composer resolution into the
+  // reachability graph is Phase C, not this phase"). Phase C is this phase
+  // (75-01 T3): `buildReachabilityModel` now builds `phpFiles`' `classToFile`
+  // map via `readComposerManifest` + `buildComposerAutoloadMap` and feeds it
+  // to `buildPhpReferenceEdges`, so the two composer-resolution entry points
+  // are imported directly. `declared-symbols`/`import-parser`/`resolve-import`
+  // stay unimported by `model.ts` itself (T1/T2's own modules reach them
+  // internally, one layer down) — this phase's direct-import surface is just
+  // the two composer modules, matched below.
+  test("src/engine/model.ts imports the composer-manifest and composer-autoload modules to build PHP's `classToFile` map", async () => {
     const modelSource = await readFile(join(dirname(fileURLToPath(import.meta.url)), "..", "src", "engine", "model.ts"), "utf8");
-    for (const modulePath of [
-      "graph/php/composer-manifest",
-      "graph/php/composer-autoload",
-      "graph/php/declared-symbols",
-      "graph/php/import-parser",
-      "graph/php/resolve-import",
-    ]) {
-      expect(modelSource).not.toContain(modulePath);
+    for (const modulePath of ["graph/php/composer-manifest", "graph/php/composer-autoload"]) {
+      expect(modelSource).toContain(modulePath);
     }
   });
 });

@@ -6,6 +6,7 @@ const ROOT = "/repo";
 const emptyManifest = () => ({
   autoload: { psr4: {}, psr0: {}, classmap: [], files: [] },
   autoloadDev: { psr4: {}, psr0: {}, classmap: [], files: [] },
+  bin: [],
 });
 
 describe("buildComposerAutoloadMap — psr-4 (AC-1)", () => {

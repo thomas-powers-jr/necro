@@ -1,5 +1,6 @@
 import type { SourceFile } from "ts-morph";
 import { Node, Project, SyntaxKind } from "ts-morph";
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import { collectDeclarations } from "../graph/symbol-graph.js";
 import type { SymbolNode } from "../graph/types.js";
@@ -78,6 +79,7 @@ export function createInitializerEffectResolver(): (
 
   return (node: SymbolNode): InitializerEffect => {
     if (isPythonFile(node.file)) return "unknown";
+    if (isPhpFile(node.file)) return "unknown";
     const sf = getSourceFile(node.file);
     if (!sf) return "unknown";
     return initializerEffectForDeclaration(sf, node.name, node.line);

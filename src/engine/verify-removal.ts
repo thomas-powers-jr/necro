@@ -2,6 +2,7 @@ import { relative } from "node:path";
 import type { ClassifiedFinding } from "../analyze/classify.js";
 import type { NecroConfig } from "../config.js";
 import { planRemovalOf } from "../fix/remove.js";
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import { DEFAULT_CHECKS } from "../refactor/index.js";
 import {
@@ -83,6 +84,16 @@ export async function verifyRemovals(
         status: "unresolved",
         output:
           "Python removal is not supported yet — necro's Python support is report/explain/triage only",
+        resolvedId: node.id,
+      });
+      continue;
+    }
+    if (isPhpFile(node.file)) {
+      verdicts.push({
+        symbol,
+        status: "unresolved",
+        output:
+          "PHP removal is not supported yet — necro's PHP support is report/explain/triage only",
         resolvedId: node.id,
       });
       continue;

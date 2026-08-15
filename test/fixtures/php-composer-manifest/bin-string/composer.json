@@ -1,0 +1,4 @@
+{
+  "name": "acme/bin-string",
+  "bin": "bin/console"
+}

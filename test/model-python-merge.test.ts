@@ -48,26 +48,27 @@ describe("buildReachabilityModel — mixed-language merge (AC-5)", () => {
     expect(model.graph.nodes.some((n) => n.name === "only_py")).toBe(true);
   });
 
-  test("a .php file does not crash the ts-morph graph and contributes zero nodes (Phase A: no PHP dead-code claims yet)", async () => {
+  test("a .php file does not crash the ts-morph graph and contributes real graph nodes (phase 75: PHP symbol graph)", async () => {
     // Discovered empirically during phase 72-01's manual spot-check: before
-    // this fix, model.ts's tsFiles filter was `!isPythonFile(f)`, which left
+    // that fix, model.ts's tsFiles filter was `!isPythonFile(f)`, which left
     // .php files routed into buildSymbolGraphCached (ts-morph) — ts-morph
     // cannot open a .php path, so buildReachabilityModel threw
-    // "Could not find source file" for any config that included PHP. This is
-    // a narrow, deliberate exception to this draft's own "do not touch
-    // model.ts" boundary: PHP's syntactic axis (complexity/dup/hotspots,
-    // this phase's actual scope) is unusable end-to-end via the real `scan()`
-    // entry point without it, since scan() always builds the reachability
-    // model first (src/engine/index.ts:56) regardless of the complexity-axis
-    // flag. The fix excludes .php from ts-morph the same way Python already
-    // is — it does NOT build a real PHP symbol graph (that's Phase C).
+    // "Could not find source file" for any config that included PHP. `.php`
+    // is still excluded from `tsFiles` (same crash hazard, still real), but
+    // as of phase 75 it is no longer a zero-node no-op: `.php` files are fed
+    // through their own hand-rolled pipeline (`buildPhpSymbolGraph` +
+    // `buildPhpReferenceEdges`, T1/T2) instead, the same way `.py` already
+    // is via its own pipeline. This test was updated in place (not left as a
+    // regression) because "PHP contributes zero nodes" was this exact test's
+    // premise, and that premise is precisely what phase 75 (T3) changes.
     const tsFile = await write("src/index.ts", "export function tsFn() { return 1; }\n");
     // Realistic PHP class shape — a bare `function phpFn(){}` snippet doesn't
-    // reproduce the crash (TS's parser error-recovers past the `<?php` line
-    // and finds nothing declaration-shaped to index); a `class`/`namespace`
-    // body is close enough to valid TS syntax that ts-morph's lenient parser
-    // extracts real-looking declarations and then crashes trying to resolve
-    // references against them. Matches the actual spot-check repro.
+    // reproduce the ts-morph crash (TS's parser error-recovers past the
+    // `<?php` line and finds nothing declaration-shaped to index); a
+    // `class`/`namespace` body is close enough to valid TS syntax that
+    // ts-morph's lenient parser extracts real-looking declarations and then
+    // crashes trying to resolve references against them. Matches the actual
+    // spot-check repro, and also gives the PHP pipeline a real method node.
     const phpFile = await write(
       "src/Calculator.php",
       "<?php\nnamespace App;\n\nclass Calculator {\n    public function classify(int $x): string {\n        return 'one';\n    }\n}\n",
@@ -77,7 +78,17 @@ describe("buildReachabilityModel — mixed-language merge (AC-5)", () => {
     const model = await buildReachabilityModel(dir, config);
     const names = model.graph.nodes.map((n) => n.name);
     expect(names).toContain("tsFn");
-    expect(model.graph.nodes.some((n) => n.file === phpFile)).toBe(false);
+    // PHP no longer contributes zero graph nodes as of this phase (AC-1).
+    expect(model.graph.nodes.some((n) => n.file === phpFile)).toBe(true);
+    expect(
+      model.graph.nodes.find((n) => n.file === phpFile && n.name === "classify"),
+    ).toEqual({
+      id: `${phpFile}:5:classify`,
+      name: "classify",
+      file: phpFile,
+      line: 5,
+      exported: true,
+    });
     expect(model.graph.nodes.some((n) => n.file === tsFile)).toBe(true);
   });
 });

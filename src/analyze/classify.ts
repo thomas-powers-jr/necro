@@ -1,3 +1,4 @@
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import type { SymbolNode } from "../graph/types.js";
 import type { CoverageStatus } from "./coverage/lookup.js";
@@ -97,12 +98,17 @@ export function classify(input: ClassifyInput): ClassifiedFinding[] {
     // 71), but that's verdict-level, not tier-stratified specifically among
     // symbols that would earn `certain`; a Python symbol never earns
     // `certain`/auto-fix eligible until that harder claim is validated too
-    // (rec-20260814-008).
+    // (rec-20260814-008). PHP gets the same cap for a simpler reason: as of
+    // this comment it has no corpus-validated accuracy claim at all — its
+    // symbol graph doesn't exist yet (T7, phase 75) — so a fortiori no PHP
+    // symbol is `certain`/auto-fix eligible either.
     const rawTier = collapse
       ? "maybe"
       : deadTier(node, result, isPublicApi, cov, effect);
     const tier =
-      rawTier === "certain" && isPythonFile(node.file) ? "likely" : rawTier;
+      rawTier === "certain" && (isPythonFile(node.file) || isPhpFile(node.file))
+        ? "likely"
+        : rawTier;
     const evidence = deadEvidence(node, result, isPublicApi, cov, effect);
     findings.push({
       node,

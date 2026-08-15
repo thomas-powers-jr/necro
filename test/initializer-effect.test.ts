@@ -2,8 +2,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Project, SyntaxKind } from "ts-morph";
-import { describe, expect, test } from "vitest";
-import { initializerEffectForDeclaration } from "../src/analyze/initializer-effect.js";
+import { describe, expect, test, vi } from "vitest";
+import {
+  createInitializerEffectResolver,
+  initializerEffectForDeclaration,
+} from "../src/analyze/initializer-effect.js";
+import type { SymbolNode } from "../src/graph/types.js";
 
 function effectOf(source: string): ReturnType<typeof initializerEffectForDeclaration> {
   const project = new Project({
@@ -129,5 +133,37 @@ describe("initializerEffectForDeclaration — phase-67 real-world corpus (AC-1)"
     }
 
     expect({ tp, fp, tn, fn }).toEqual({ tp: 3, fp: 0, tn: 16, fn: 0 });
+  });
+});
+
+describe("createInitializerEffectResolver — PHP guard (T7, phase 75)", () => {
+  const node = (file: string): SymbolNode => ({
+    id: `${file}:1:a`,
+    name: "a",
+    file,
+    line: 1,
+    exported: false,
+  });
+
+  test("a PHP node returns unknown without ever touching ts-morph's addSourceFileAtPath — a real .ts node still does (positive control)", () => {
+    const spy = vi.spyOn(Project.prototype, "addSourceFileAtPath");
+    try {
+      const resolve = createInitializerEffectResolver();
+
+      expect(resolve(node("pkg/mod.php"))).toBe("unknown");
+      expect(spy).not.toHaveBeenCalledWith(
+        expect.stringContaining(".php"),
+      );
+      expect(spy).not.toHaveBeenCalled();
+
+      // Positive control: a real .ts path does reach ts-morph — proves the
+      // spy is wired to the object this resolver actually uses, so the
+      // negative assertion above isn't vacuous.
+      const tsFile = fileURLToPath(import.meta.url);
+      resolve(node(tsFile));
+      expect(spy).toHaveBeenCalledWith(tsFile);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

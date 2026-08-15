@@ -1,0 +1,19 @@
+# Retro
+
+## Gate bypasses
+
+- ERROR settle via --force: settle --force bypassed failing verdicts (deep: AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7)
+
+## Rough tasks
+
+- T8: DONE_WITH_CONCERNS — Built 3 real PHP fixture repos (app/library/autoload-dev-gotcha) under test/fixtures/php-symbol-graph/, hand-computed truth table, wired end-to-end scan test + new test/explain-php.test.ts (mirrors explain-python.test.ts pattern, pre-authorized). 17 findings + 5-edge graph assertion in app fixture; library quarantine and autoload-dev gotcha each isolated. All green: targeted 7/7, full suite 148/150 files 1024/1030 tests, tsc clean.
+
+CRITICAL FINDING, independently verified against real source (not taking the subagent's word for it): no PHP symbol can currently reach 'alive' (prod-reachable) status under ANY circumstance. Two real causes: (1) model.ts's phpEntries.records merge (~252-257) adds bare file paths to prodEntries but has no node-rooting loop mirroring the existing pluginProdEntryFiles (203-207) / testEntries (212-214) pattern - confirmed this exact pattern already exists in the codebase for exactly this failure mode, with a comment explaining why it's needed. (2) buildPhpReferenceEdges (T2) only extracts call sites from inside class method bodies (methodDeclsOf), never top-level script statements - so composer bin/public-index.php entry scripts (always thin bootstrap code like '$x = new Foo(); $x->bar();' in every real PHP framework) produce zero edges regardless of (1).
+
+I checked whether fixing (1) alone would suffice for T8's own realistic fixture (per advisor's diagnostic question) by inspecting bin/console.php and public/index.php directly: NEITHER declares its own class - both are pure bootstrap scripts calling into separate classes. So (1) alone would NOT produce an alive verdict here; (2) is load-bearing, not a deferrable recall refinement. This means essentially all real-world PHP entry shapes currently produce zero prod-alive verdicts phase-wide - a severe gap against the phase's own stated objective ('PHP dead-code verdicts are real as of this phase').
+
+T8 encoded this responsibly as a named regression-lock test ('KNOWN GAP: ...') asserting current (wrong) behavior with an explicit comment to update the expectation, not defend it, once fixed - not silently routed around or hidden.
+
+Secondary findings (non-blocking, noted for SUMMARY): AC-6's tier cap (T7) is unit-tested but unreachable through any real fixture since T1's exported:true default means classify's earlier exported check returns 'likely' before the cap is ever consulted - the cap is correct as a floor, just not integration-demonstrated. T8's fixture does not exercise the 4 T7 safety gates (covered by their own existing unit tests instead) - a gap against AC-7's literal Given clause. T5's library-signal rationale (guzzle/phpunit corpus-driven, real and independently verified by me) still needs to reach the human at settle - currently only in a code comment.
+
+Recording DONE_WITH_CONCERNS, not DONE: AC-7 is not fully satisfied as literally written (no verdict in the truth table reaches 'alive', and the 4 safety gates aren't fixture-exercised). Not settling until gap #1 and #2 are addressed or AC-7 is explicitly amended - this is a phase-blocking finding, escalating to the user.

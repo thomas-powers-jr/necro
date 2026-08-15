@@ -1,0 +1,9 @@
+{
+    "name": "acme/some-lib",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Lib\\": "lib/"
+        }
+    }
+}

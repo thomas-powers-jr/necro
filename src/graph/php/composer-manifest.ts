@@ -16,6 +16,8 @@ export interface ComposerAutoloadBlock {
 export interface ComposerManifest {
   autoload: ComposerAutoloadBlock;
   autoloadDev: ComposerAutoloadBlock;
+  /** Composer's top-level `bin` field (a sibling of `autoload`, not inside it) — script paths relative to the manifest's own directory. Composer allows a bare string or an array of strings; always normalized to `string[]` here, matching this file's existing psr-4/psr-0 array normalization convention. */
+  bin: string[];
 }
 
 function emptyAutoloadBlock(): ComposerAutoloadBlock {
@@ -23,7 +25,11 @@ function emptyAutoloadBlock(): ComposerAutoloadBlock {
 }
 
 function emptyManifest(): ComposerManifest {
-  return { autoload: emptyAutoloadBlock(), autoloadDev: emptyAutoloadBlock() };
+  return {
+    autoload: emptyAutoloadBlock(),
+    autoloadDev: emptyAutoloadBlock(),
+    bin: [],
+  };
 }
 
 /** Read and normalize `composer.json`'s `autoload`/`autoload-dev` blocks from `root`. Best-effort: a missing file, malformed JSON, or missing/empty autoload block returns an empty manifest — never throws. */
@@ -50,6 +56,7 @@ export async function readComposerManifest(
   return {
     autoload: parseAutoloadBlock(obj.autoload),
     autoloadDev: parseAutoloadBlock(obj["autoload-dev"]),
+    bin: parseStringOrArray(obj.bin),
   };
 }
 
@@ -79,6 +86,13 @@ function parsePrefixMap(value: unknown): ComposerPrefixMap {
 }
 
 function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string");
+}
+
+/** Composer's `bin` field: a bare string or an array of strings — unlike `classmap`/`files` (always arrays per the composer schema), `bin` allows either shape, so it always normalizes to `string[]` here. */
+function parseStringOrArray(value: unknown): string[] {
+  if (typeof value === "string") return [value];
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string");
 }

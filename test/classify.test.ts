@@ -215,6 +215,35 @@ describe("classify — Python tier cap (AC-6, phase 45)", () => {
   });
 });
 
+describe("classify — PHP tier cap (T7, phase 75)", () => {
+  test("a private, zero-ref PHP symbol is capped at likely, never certain", () => {
+    const [f] = classify({
+      nodes: [node("a", false, "pkg/mod.php")],
+      reachability: [reach("a", "dead")],
+    });
+    expect(f?.tier).toBe("likely");
+    expect(f?.autoFixEligible).toBe(false);
+  });
+
+  test("the same shape for a TS symbol is unaffected — still reaches certain", () => {
+    const [f] = classify({
+      nodes: [node("a", false, "pkg/mod.ts")],
+      reachability: [reach("a", "dead")],
+    });
+    expect(f?.tier).toBe("certain");
+    expect(f?.autoFixEligible).toBe(true);
+  });
+
+  test("an already-tainted PHP symbol stays maybe (cap never raises a tier)", () => {
+    const [f] = classify({
+      nodes: [node("a", false, "pkg/mod.php")],
+      reachability: [reach("a", "dead", true)],
+    });
+    expect(f?.tier).toBe("maybe");
+    expect(f?.autoFixEligible).toBe(false);
+  });
+});
+
 describe("classify — dict-literal dispatch taint fix integration (rec-20260814-001, AC-5)", () => {
   test("a private zero-ref symbol in the real pip cache.py fixture is promoted from maybe to likely once findTaintedFiles no longer taints the file — still not certain, per the pre-existing Python hard cap above", async () => {
     const fixture = join(

@@ -8,7 +8,14 @@ import {
 import type { NecroConfig } from "../config.js";
 import { discoverFiles } from "../discover.js";
 import { globMatcher } from "../glob.js";
+import { buildComposerAutoloadMap } from "../graph/php/composer-autoload.js";
+import { readComposerManifest } from "../graph/php/composer-manifest.js";
+import { findPhpTaintedFiles } from "../graph/php/dynamic-dispatch.js";
 import { isPhpFile } from "../graph/php/language.js";
+import { isPhpLibrary, resolvePhpPublicApiIds } from "../graph/php/library.js";
+import { resolvePhpEntries } from "../graph/php/php-entries.js";
+import { buildPhpReferenceEdges } from "../graph/php/reference-edges.js";
+import { buildPhpSymbolGraph } from "../graph/php/symbol-graph.js";
 import { isPythonFile } from "../graph/python/language.js";
 import {
   buildPythonModuleMap,
@@ -74,7 +81,7 @@ export interface ReachabilityModel {
   /** File contents (read once; reused by the complexity axis). */
   sources: Array<{ file: string; text: string }>;
   entryResolution: EntryResolution;
-  /** Exported Python symbol ids in a Python-library target (§2.3) — externally consumable, quarantined to `maybe` by `classify()`. Empty for non-library targets and for TS/JS. */
+  /** Externally-consumable symbol ids in a library target (§2.3, phase 75 T5 for PHP) — quarantined to `maybe` by `classify()`. Covers Python (`isPythonLibrary`), TS/JS (`isTsLibrary`), and PHP (`isPhpLibrary`, PSR-4/PSR-0-namespace-scoped, `src/graph/php/library.ts`). Empty for non-library targets. */
   publicApiIds: Set<string>;
 }
 
@@ -131,18 +138,28 @@ export async function buildReachabilityModel(
   );
 
   // Language partition (AC-5): the TS graph (ts-morph) covers everything but
-  // `.py`/`.php`; the Python graph is hand-rolled (no ts-morph equivalent
-  // exists). `.php` is excluded from `tsFiles` too (phase 72-01) — ts-morph's
-  // parser is lenient enough that PHP class/method syntax can produce
-  // partial, garbled declarations it treats as real, and then crashes
-  // ("Could not find source file") trying to resolve references against them
-  // via the underlying TS Program, which never recognized the `.php`
-  // extension in the first place. `.php` files simply contribute zero graph
-  // nodes for now (no PHP dead-code claims until a real PHP symbol graph
-  // ships) — the syntactic axis (complexity/dup/hotspots) still sees them via
-  // `sources`/`files` below, independent of this graph. Node ids are
-  // file-path-based, so concatenating graphs never collides.
+  // `.py`/`.php`; the Python and PHP graphs are both hand-rolled (no ts-morph
+  // equivalent exists for either). `.php` is excluded from `tsFiles` too
+  // (phase 72-01) — ts-morph's parser is lenient enough that PHP class/method
+  // syntax can produce partial, garbled declarations it treats as real, and
+  // then crashes ("Could not find source file") trying to resolve references
+  // against them via the underlying TS Program, which never recognized the
+  // `.php` extension in the first place. As of phase 75, `.php` files
+  // contribute real graph nodes/edges via their own pipeline
+  // (`buildPhpSymbolGraph` for class/interface/trait/enum method+property
+  // nodes, `buildPhpReferenceEdges` for trait/interface/typed-`->`-chain
+  // reference edges, resolved against Phase B's composer-autoload
+  // `classToFile` map) — PHP dead-code verdicts are real as of this phase.
+  // PHP entry-point resolution (`resolvePhpEntries`, composer `bin`/
+  // `public/index.php`/PHPUnit, below) and PHP library quarantine
+  // (`isPhpLibrary`/`resolvePhpPublicApiIds`, `src/graph/php/library.ts`,
+  // mirroring `isPythonLibrary`/`isTsLibrary` below) also landed this phase.
+  // The syntactic axis (complexity/dup/hotspots) still sees `.php` files via
+  // `sources`/`files` below, independent of this graph either way. Node ids
+  // are file-path-based, so
+  // concatenating graphs never collides.
   const pyFiles = files.filter(isPythonFile);
+  const phpFiles = files.filter(isPhpFile);
   const tsFiles = files.filter((f) => !isPythonFile(f) && !isPhpFile(f));
   const tsGraph = await buildSymbolGraphCached(targetPath, tsFiles, {
     isTestFile,
@@ -154,9 +171,19 @@ export async function buildReachabilityModel(
     pyFiles,
     pyModuleMap,
   );
+  const composerManifest = await readComposerManifest(targetPath);
+  const { classToFile: phpClassToFile } = await buildComposerAutoloadMap(
+    targetPath,
+    phpFiles,
+    composerManifest,
+  );
+  const phpNodes = await buildPhpSymbolGraph(phpFiles);
+  const phpEdges = await buildPhpReferenceEdges(phpFiles, phpClassToFile, {
+    isTestFile,
+  });
   const graph: SymbolGraph = {
-    nodes: [...tsGraph.nodes, ...pyGraph.nodes],
-    edges: [...tsGraph.edges, ...pyGraph.edges],
+    nodes: [...tsGraph.nodes, ...pyGraph.nodes, ...phpNodes],
+    edges: [...tsGraph.edges, ...pyGraph.edges, ...phpEdges],
   };
 
   const syntheticEdges: SymbolEdge[] = detected.flatMap((p) =>
@@ -213,6 +240,52 @@ export async function buildReachabilityModel(
   }
   for (const file of pythonEntries.testEntries) testEntries.add(file);
 
+  // PHP entry-point resolution (composer `bin`, `public/index.php`
+  // convention, PHPUnit `<testsuite>` config or `*Test.php` convention) —
+  // additive, first-mechanism-wins merge into the same prod-entry
+  // diagnostic (§2.3 PHP), mirroring the Python block above exactly.
+  const phpEntries = await resolvePhpEntries(
+    targetPath,
+    phpFiles,
+    composerManifest,
+  );
+  for (const record of phpEntries.records) {
+    if (!prodEntries.has(record.file)) {
+      prodEntries.add(record.file);
+      prodEntryRecords.push(record);
+    }
+  }
+  for (const file of phpEntries.testEntries) testEntries.add(file);
+  // Unlike Python (module-level statement nodes exist) and unlike a bare
+  // file-path prod seed, every PHP graph node is a class member (method or
+  // property) — there is no file-level node a bare file-path testEntries
+  // seed roots. Without this, a PHPUnit-resolved test file's own test
+  // methods would read as dead despite the file itself being a registered
+  // test entry. Mirrors the `isTestFile` node-rooting loop above
+  // (`node.exported && isTestFile(node.file)`), scoped to PHP's
+  // composer/PHPUnit-derived test files specifically.
+  for (const node of graph.nodes) {
+    if (phpEntries.testEntries.has(node.file)) testEntries.add(node.id);
+  }
+  // Prod-side mirror of the test-entry node-rooting loop directly above
+  // (75-01 T9, post-T8 finding): a composer-bin/public/index.php entry file
+  // that itself declares a class needs its own members rooted the same way,
+  // for the same reason — a bare file-path prodEntries seed roots nothing
+  // since PHP has no file-level graph node. No `node.exported` check here
+  // (unlike the `pluginProdEntryFiles` loop above): `buildPhpSymbolGraph`
+  // (T1) sets `exported: true` unconditionally on every PHP node, so the
+  // check would always pass and carries no real meaning for PHP. This alone
+  // does not fully seed PHP prod reachability — the realistic shape (a thin
+  // bootstrap script that calls into a SEPARATELY-declared class) still
+  // produces zero edges out of the entry file, since `buildPhpReferenceEdges`
+  // never walks top-level script statements (T10's job, not this loop's).
+  const phpProdEntryFiles = new Set(
+    phpEntries.records.map((record) => record.file),
+  );
+  for (const node of graph.nodes) {
+    if (phpProdEntryFiles.has(node.file)) prodEntries.add(node.id);
+  }
+
   const toPosixRel = (abs: string) => relToRoot(abs).split("\\").join("/");
   const entryResolution = buildEntryResolution({
     prodEntryRecords,
@@ -226,6 +299,7 @@ export async function buildReachabilityModel(
   const taintedFiles = new Set([
     ...findTaintedFiles(sources),
     ...starTaintedFiles,
+    ...(await findPhpTaintedFiles(phpFiles)),
   ]);
 
   const edges = [...graph.edges, ...syntheticEdges];
@@ -259,7 +333,34 @@ export async function buildReachabilityModel(
       ? resolvePublicApiIds(manifestEntryFiles, tsFiles)
       : new Set<string>();
 
-  const publicApiIds = new Set([...pythonPublicApiIds, ...tsPublicApiIds]);
+  // PHP mirror of the two library quarantines above (phase 75 T5, AC-5): a
+  // composer.json with a `name` field, whose `type` isn't the literal
+  // string `"project"` (composer's own "this is an app skeleton" value),
+  // and with no `public/index.php` web front-controller present, marks the
+  // package a library — every symbol under its own declared PSR-4/PSR-0
+  // namespace director(y/ies) is then public API. (`bin` deliberately plays
+  // no part: real published libraries — e.g. `phpunit/phpunit` itself —
+  // commonly ship a `bin/` script too, so its presence doesn't discriminate
+  // "application" from "library" in practice; see `library.ts`'s doc
+  // comment for the real-corpus check that ruled it out.) Unlike Python's
+  // `.filter(n => n.exported)` mirror above, this can't filter on
+  // `SymbolNode.exported` — `buildPhpSymbolGraph` sets it `true`
+  // unconditionally for every PHP node (no visibility extraction in this
+  // phase's scope), so that flag does no discriminating work here;
+  // `resolvePhpPublicApiIds` instead scopes by each node's file path against
+  // the manifest's own autoload directories. See `src/graph/php/library.ts`
+  // for the full library-signal-selection rationale (candidates considered,
+  // checked against a real `guzzlehttp/guzzle`/`phpunit/phpunit` corpus, and
+  // why this one was chosen).
+  const phpPublicApiIds = (await isPhpLibrary(targetPath, phpFiles))
+    ? resolvePhpPublicApiIds(targetPath, phpNodes, composerManifest)
+    : new Set<string>();
+
+  const publicApiIds = new Set([
+    ...pythonPublicApiIds,
+    ...tsPublicApiIds,
+    ...phpPublicApiIds,
+  ]);
 
   return {
     files,

@@ -201,4 +201,46 @@ describe("runRefactor (AC-1, AC-4)", () => {
       expect(checksSeen).toEqual(["pytest"]);
     });
   });
+
+  describe("PHP + default checks (T7, phase 75)", () => {
+    let phpFile: string;
+    let checksSeen: string[];
+    const recordingRunner = (): VerifyRunner => ({
+      createWorktree: async () => "/wt",
+      writeEdit: async () => {},
+      runCheck: async (_wt, command) => {
+        checksSeen.push(command);
+        return { ok: true, output: "" };
+      },
+      removeWorktree: async () => {},
+    });
+
+    beforeEach(async () => {
+      phpFile = join(dir, "svc.php");
+      await writeFile(phpFile, "<?php\nfunction big() {\n  return 1;\n}\n");
+      checksSeen = [];
+    });
+
+    test("a PHP finding under default checks is skipped, never runs npm checks (AC-1)", async () => {
+      const res = await runRefactor([finding(phpFile, "big")], DEFAULT_LLM, okClient(), {
+        verifyRunner: recordingRunner(),
+        repoRoot: dir,
+      });
+      expect(res.outcomes[0]?.badge).toEqual({
+        status: "skipped",
+        reason: expect.stringContaining("PHP"),
+      });
+      expect(checksSeen).toEqual([]);
+    });
+
+    test("an explicit --checks override against PHP still runs (AC-4)", async () => {
+      const res = await runRefactor([finding(phpFile, "big")], DEFAULT_LLM, okClient(), {
+        verifyRunner: recordingRunner(),
+        repoRoot: dir,
+        checks: ["phpunit"],
+      });
+      expect(res.outcomes[0]?.badge?.status).toBe("green");
+      expect(checksSeen).toEqual(["phpunit"]);
+    });
+  });
 });

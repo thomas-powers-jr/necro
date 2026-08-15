@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { relative } from "node:path";
 import type { LlmOptions } from "../config.js";
+import { isPhpFile } from "../graph/php/language.js";
 import { isPythonFile } from "../graph/python/language.js";
 import type {
   ComplexityFinding,
@@ -36,6 +37,27 @@ export const DEFAULT_CHECKS = ["npm run typecheck", "npx vitest run"];
  * explicit `--checks` override is trusted as-is, even against Python. */
 const PYTHON_DEFAULT_CHECKS_SKIP_REASON =
   "default checks are npm-based (typecheck+tests) and don't apply to Python — pass --checks explicitly (e.g. pytest) to verify";
+
+/** Same rationale as {@link PYTHON_DEFAULT_CHECKS_SKIP_REASON}, for PHP (T7,
+ * phase 75) — kept as its own constant/message so the Python skip reason
+ * never gets diluted into a generic "not TS" string. */
+const PHP_DEFAULT_CHECKS_SKIP_REASON =
+  "default checks are npm-based (typecheck+tests) and don't apply to PHP — pass --checks explicitly (e.g. phpunit) to verify";
+
+/**
+ * The default-checks skip reason for a set of touched files, or `undefined`
+ * when none of them are Python/PHP (checks should run normally). `isMatch`
+ * lets both call sites — one file (`runRefactor`) and several locations
+ * (`runExtractDuplicate`) — share this without either duplicating the
+ * Python-then-PHP precedence or flattening into a deeper nested ternary.
+ */
+function defaultChecksSkipReason(
+  isMatch: (predicate: (file: string) => boolean) => boolean,
+): string | undefined {
+  if (isMatch(isPythonFile)) return PYTHON_DEFAULT_CHECKS_SKIP_REASON;
+  if (isMatch(isPhpFile)) return PHP_DEFAULT_CHECKS_SKIP_REASON;
+  return undefined;
+}
 
 /** One god-function finding and the model's suggested split. The original
  * `finding` is carried unchanged — refactor never mutates it. */
@@ -119,13 +141,13 @@ export async function runRefactor(
     );
     const diff = await computeUnifiedDiff(original, newContent);
 
+    const skipReason = usingDefaultChecks
+      ? defaultChecksSkipReason((pred) => pred(finding.file))
+      : undefined;
     const badge = !opts.verifyRunner
       ? null
-      : usingDefaultChecks && isPythonFile(finding.file)
-        ? {
-            status: "skipped" as const,
-            reason: PYTHON_DEFAULT_CHECKS_SKIP_REASON,
-          }
+      : skipReason
+        ? { status: "skipped" as const, reason: skipReason }
         : await verifyProposal(
             { file: relative(repoRoot, finding.file), content: newContent },
             checks,
@@ -242,14 +264,15 @@ export async function runExtractDuplicate(
       continue;
     }
 
+    const skipReason = usingDefaultChecks
+      ? defaultChecksSkipReason((pred) =>
+          finding.locations.some((l) => pred(l.file)),
+        )
+      : undefined;
     const badge = !opts.verifyRunner
       ? null
-      : usingDefaultChecks &&
-          finding.locations.some((l) => isPythonFile(l.file))
-        ? {
-            status: "skipped" as const,
-            reason: PYTHON_DEFAULT_CHECKS_SKIP_REASON,
-          }
+      : skipReason
+        ? { status: "skipped" as const, reason: skipReason }
         : await verifyEdits(
             files.map((f) => ({
               file: relative(repoRoot, f.file),
