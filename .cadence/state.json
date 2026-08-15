@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 1129,
+  "revision": 1134,
   "project": {
     "name": "necro",
     "createdAt": "2026-06-08T00:09:04.004Z"
@@ -17,7 +17,7 @@
   "session": {
     "tokenUtilization": 1,
     "lastHandoff": "SESSION-2026-08-15.md",
-    "subagentSpawns": 200,
+    "subagentSpawns": 204,
     "subagentBaselines": {}
   },
   "skillAudit": {
